@@ -35,7 +35,7 @@ struct FoodLogEntryView: View {
                                         Image(systemName: "camera.fill")
                                             .font(.system(size: 32))
                                             .foregroundStyle(Color.zzzyncMuted)
-                                        Text("Tap to add a food photo")
+                                        Text("Add photo")
                                             .font(.subheadline)
                                             .foregroundStyle(Color.zzzyncMuted)
                                     }
@@ -53,7 +53,7 @@ struct FoodLogEntryView: View {
 
                         // Text description
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("What did you eat?")
+                            Text("Meal notes")
                                 .font(.subheadline)
                                 .foregroundStyle(Color.zzzyncMuted)
                             TextField("e.g. Chicken salad with olive oil dressing", text: $textInput, axis: .vertical)
@@ -68,7 +68,7 @@ struct FoodLogEntryView: View {
                         Button {
                             Task { await analyzeFood() }
                         } label: {
-                            Label("Analyze with Claude", systemImage: "sparkles")
+                            Label("Analyze", systemImage: "sparkles")
                                 .font(.headline)
                                 .frame(maxWidth: .infinity)
                                 .padding()
@@ -79,7 +79,7 @@ struct FoodLogEntryView: View {
                         .disabled(isAnalyzing || (textInput.isEmpty && selectedImage == nil))
 
                         if isAnalyzing {
-                            LoadingCardView(message: "Claude is auditing your meal timing...")
+                            LoadingCardView(message: "Analyzing...")
                         }
 
                         if let error = analysisError {

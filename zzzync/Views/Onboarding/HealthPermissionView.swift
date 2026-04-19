@@ -20,7 +20,7 @@ struct HealthPermissionView: View {
                     .fontWeight(.bold)
                     .foregroundStyle(.white)
 
-                Text("zzzync reads your sleep stages, HRV, and resting heart rate to calculate your Social Jetlag score.")
+                Text("Used for your Jetlag score.")
                     .font(.subheadline)
                     .foregroundStyle(Color.zzzyncMuted)
                     .multilineTextAlignment(.center)
@@ -35,7 +35,7 @@ struct HealthPermissionView: View {
                 if granted {
                     HStack {
                         Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-                        Text("Health access granted").foregroundStyle(.white)
+                        Text("Health connected").foregroundStyle(.white)
                     }
                     Button(action: onNext) {
                         Text("Continue")
@@ -52,7 +52,7 @@ struct HealthPermissionView: View {
                     } label: {
                         HStack {
                             if isRequesting { ProgressView().tint(Color.zzzyncOnPrimary) }
-                            Text(isRequesting ? "Requesting..." : "Allow Health Access")
+                            Text(isRequesting ? "Requesting..." : "Allow Health")
                                 .font(.headline)
                         }
                         .frame(maxWidth: .infinity)
@@ -63,7 +63,7 @@ struct HealthPermissionView: View {
                     }
                     .disabled(isRequesting)
 
-                    Button("Skip for now", action: onNext)
+                    Button("Skip", action: onNext)
                         .font(.subheadline)
                         .foregroundStyle(Color.zzzyncMuted)
                 }
@@ -79,9 +79,9 @@ struct HealthPermissionView: View {
 
     private var dataPoints: some View {
         VStack(alignment: .leading, spacing: 12) {
-            permRow("Sleep stages", icon: "moon.zzz.fill")
-            permRow("Heart rate variability (HRV)", icon: "waveform.path.ecg")
-            permRow("Resting heart rate", icon: "heart.circle.fill")
+            permRow("Sleep", icon: "moon.zzz.fill")
+            permRow("HRV", icon: "waveform.path.ecg")
+            permRow("Resting HR", icon: "heart.circle.fill")
         }
         .padding()
         .background(Color.zzzyncSurface)

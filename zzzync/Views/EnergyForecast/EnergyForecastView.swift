@@ -3,6 +3,7 @@ import MarkdownUI
 
 struct EnergyForecastView: View {
     @State private var vm = ForecastViewModel()
+    @State private var showFullNarrative = false
 
     private var energyPoints: [EnergyPoint] {
         guard let forecast = vm.forecast else { return [] }
@@ -24,19 +25,19 @@ struct EnergyForecastView: View {
                                 .padding(.horizontal, 20).padding(.top, 4).padding(.bottom, 20)
 
                             // Energy curve
-                            sectionLabel("Today's Energy Curve")
+                            sectionLabel("Energy Curve")
                             energyChartCard
                                 .padding(.horizontal, 20).padding(.bottom, 20)
 
                             // Cognitive clashes
                             if !forecast.cognitiveClashes.isEmpty {
-                                sectionLabel("Cognitive Clashes")
+                                sectionLabel("Clashes")
                                 clashesCard(forecast.cognitiveClashes)
                                     .padding(.horizontal, 20).padding(.bottom, 20)
                             }
 
                             // Claude narrative
-                            sectionLabel("Claude's Analysis")
+                            sectionLabel("Insight")
                             narrativeCard(forecast.claudeNarrative)
                                 .padding(.horizontal, 20).padding(.bottom, 20)
 
@@ -45,7 +46,7 @@ struct EnergyForecastView: View {
                         }
 
                         if vm.isLoading {
-                            LoadingCardView(message: "Generating your energy forecast with Claude...")
+                            LoadingCardView(message: "Generating forecast...")
                                 .padding(.horizontal, 20)
                         }
                         if let error = vm.error {
@@ -97,7 +98,11 @@ struct EnergyForecastView: View {
                 Text(peakDate, style: .time)
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-                Text("\(forecast.cognitiveClashes.count) cognitive clash\(forecast.cognitiveClashes.count == 1 ? "" : "es") detected")
+                Text(
+                    forecast.cognitiveClashes.isEmpty
+                    ? "Clear day"
+                    : "\(forecast.cognitiveClashes.count) clash\(forecast.cognitiveClashes.count == 1 ? "" : "es")"
+                )
                     .font(.caption)
                     .foregroundStyle(forecast.cognitiveClashes.isEmpty ? Color.zzzyncGreen : Color.zzzyncRed)
             }
@@ -119,7 +124,7 @@ struct EnergyForecastView: View {
             }
 
             if energyPoints.isEmpty {
-                Text("No forecast data. Pull down to generate.")
+                Text("Pull to generate.")
                     .font(.subheadline).foregroundStyle(Color.zzzyncMuted)
                     .frame(height: 180).frame(maxWidth: .infinity)
             } else {
@@ -198,11 +203,22 @@ struct EnergyForecastView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 Image(systemName: "sparkles").foregroundStyle(Color.zzzyncBlue)
-                Text("Claude's Analysis")
+                Text("Quick Insight")
                     .font(.subheadline).fontWeight(.semibold).foregroundStyle(.white)
             }
             Divider().background(Color.zzzyncSurface2)
-            Markdown(narrative).markdownTheme(.zzzync)
+            Markdown(narrative)
+                .markdownTheme(.zzzync)
+                .lineLimit(showFullNarrative ? nil : 5)
+            if narrative.count > 180 {
+                Button(showFullNarrative ? "Less" : "More") {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        showFullNarrative.toggle()
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(Color.zzzyncPrimary)
+            }
         }
         .padding(16)
         .background(Color.zzzyncSurface)
@@ -229,7 +245,7 @@ struct EnergyForecastView: View {
             VStack(spacing: 8) {
                 Text("No Forecast yet")
                     .font(.title3).fontWeight(.bold).foregroundStyle(.white)
-                Text("Pull down to generate your energy forecast and see which meetings clash with your biology.")
+                Text("Pull to generate.")
                     .font(.subheadline).foregroundStyle(Color.zzzyncMuted)
                     .multilineTextAlignment(.center).padding(.horizontal, 40)
             }

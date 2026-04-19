@@ -17,7 +17,7 @@ struct MetabolicAuditView: View {
                     }
                 }
             }
-            .navigationTitle("Metabolic Audit")
+            .navigationTitle("Meals")
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Color.zzzyncBackground, for: .navigationBar)
             .toolbar {
@@ -58,12 +58,12 @@ struct MetabolicAuditView: View {
             VStack(spacing: 8) {
                 Text("No meals logged")
                     .font(.title3).fontWeight(.bold).foregroundStyle(.white)
-                Text("Log a meal to see how your eating timing aligns with your biological clock.")
+                Text("Add a meal to check timing.")
                     .font(.subheadline).foregroundStyle(Color.zzzyncMuted)
                     .multilineTextAlignment(.center).padding(.horizontal, 40)
             }
             Button { showLogEntry = true } label: {
-                Label("Log First Meal", systemImage: "plus")
+                Label("Log Meal", systemImage: "plus")
                     .font(.subheadline).fontWeight(.semibold)
                     .foregroundStyle(.black)
                     .padding(.horizontal, 28).padding(.vertical, 13)
@@ -80,7 +80,7 @@ struct MetabolicAuditView: View {
         ScrollView {
             LazyVStack(spacing: 12) {
                 if vm.isLoggingFood {
-                    LoadingCardView(message: "Auditing meal timing with Claude...")
+                    LoadingCardView(message: "Checking meal timing...")
                         .padding(.horizontal, 20)
                 }
                 if let error = vm.error {

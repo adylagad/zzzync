@@ -65,7 +65,7 @@ private struct WelcomeStep: View {
                 Text("zzzync")
                     .font(.system(size: 40, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-                Text("Social Jetlag Resolver")
+                Text("Reset Your Body Clock")
                     .font(.footnote).fontWeight(.semibold)
                     .foregroundStyle(Color.zzzyncMuted)
                     .tracking(1.2).textCase(.uppercase)
@@ -78,24 +78,24 @@ private struct WelcomeStep: View {
                 featureRow(
                     icon: "moon.fill",
                     color: .zzzyncPrimary,
-                    title: "Social Jetlag Score",
-                    desc: "Discover the gap between your body clock and your calendar demands."
+                    title: "Jetlag Score",
+                    desc: "Body clock vs schedule."
                 )
                 Divider().background(Color.zzzyncSurface2).padding(.leading, 66)
 
                 featureRow(
                     icon: "fork.knife",
                     color: .zzzyncGreen,
-                    title: "Metabolic Window Audit",
-                    desc: "See if you're eating in sync with your circadian melatonin window."
+                    title: "Meal Timing",
+                    desc: "See if meals are on time."
                 )
                 Divider().background(Color.zzzyncSurface2).padding(.leading, 66)
 
                 featureRow(
                     icon: "brain.head.profile",
                     color: .zzzyncAccent,
-                    title: "Daily Bio-Protocol",
-                    desc: "Get your optimal caffeine, peak focus, and last-meal windows."
+                    title: "Daily Plan",
+                    desc: "Clear timing for caffeine, focus, and food."
                 )
             }
             .background(Color.zzzyncSurface)

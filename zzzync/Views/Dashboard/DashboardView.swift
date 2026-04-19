@@ -25,7 +25,7 @@ struct DashboardView: View {
                         }
 
                         // Section: Circadian status
-                        sectionHeader("Circadian Status")
+                        sectionHeader("Status")
                         if let jetlag = vm.jetlagResult {
                             jetlagCard(jetlag)
                                 .padding(.horizontal, 20)
@@ -34,7 +34,7 @@ struct DashboardView: View {
 
                         // Section: Today's energy
                         if let forecast = vm.forecast {
-                            sectionHeader("Today's Energy")
+                            sectionHeader("Energy")
                             forecastCard(forecast)
                                 .padding(.horizontal, 20)
                                 .padding(.bottom, 16)
@@ -42,7 +42,7 @@ struct DashboardView: View {
 
                         // Section: Recent meals
                         if !vm.recentFoodLogs.isEmpty {
-                            sectionHeader("Recent Meals")
+                            sectionHeader("Meals")
                             recentMealsCard
                                 .padding(.horizontal, 20)
                                 .padding(.bottom, 16)
@@ -50,7 +50,7 @@ struct DashboardView: View {
 
                         // States
                         if vm.isLoading {
-                            LoadingCardView(message: "Analyzing with Claude...")
+                            LoadingCardView(message: "Analyzing...")
                                 .padding(.horizontal, 20)
                                 .padding(.bottom, 16)
                         }
@@ -64,7 +64,7 @@ struct DashboardView: View {
                 }
                 .refreshable { await vm.refresh() }
             }
-            .navigationTitle("Summary")
+            .navigationTitle("Today")
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Color.zzzyncBackground, for: .navigationBar)
             .toolbar {
@@ -191,7 +191,7 @@ struct DashboardView: View {
                     .foregroundStyle(.white)
                     .lineLimit(2)
                 Label(
-                    String(format: "%.1fh gap  ·  Body vs Calendar", abs(jetlag.jetlagHours)),
+                    String(format: "%.1fh gap", abs(jetlag.jetlagHours)),
                     systemImage: "calendar.badge.clock"
                 )
                 .font(.caption)
@@ -224,11 +224,11 @@ struct DashboardView: View {
                         .fontWeight(.semibold)
                         .foregroundStyle(.white)
                     if forecast.cognitiveClashes.isEmpty {
-                        Label("No clashes today", systemImage: "checkmark.circle.fill")
+                        Label("No clashes", systemImage: "checkmark.circle.fill")
                             .font(.caption)
                             .foregroundStyle(Color.zzzyncGreen)
                     } else {
-                        Label("\(forecast.cognitiveClashes.count) cognitive clash\(forecast.cognitiveClashes.count == 1 ? "" : "es")",
+                        Label("\(forecast.cognitiveClashes.count) clash\(forecast.cognitiveClashes.count == 1 ? "" : "es")",
                               systemImage: "exclamationmark.triangle.fill")
                             .font(.caption)
                             .foregroundStyle(Color.zzzyncAccent)

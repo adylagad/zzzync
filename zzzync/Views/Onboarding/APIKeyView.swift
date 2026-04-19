@@ -21,7 +21,7 @@ struct APIKeyView: View {
                     .fontWeight(.bold)
                     .foregroundStyle(.white)
 
-                Text("zzzync uses Claude to correlate your biometrics and generate insights. Enter your Anthropic API key to get started.")
+                Text("Paste your Anthropic key to continue.")
                     .font(.subheadline)
                     .foregroundStyle(Color.zzzyncMuted)
                     .multilineTextAlignment(.center)
@@ -44,7 +44,7 @@ struct APIKeyView: View {
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
 
-                Text("Your key is stored only on this device.")
+                Text("Stored on this device.")
                     .font(.caption2)
                     .foregroundStyle(Color.zzzyncMuted)
             }
@@ -58,7 +58,7 @@ struct APIKeyView: View {
                 } label: {
                     HStack {
                         if isValidating { ProgressView().tint(apiKey.hasPrefix("sk-ant") ? Color.zzzyncOnPrimary : .white) }
-                        Text(isValidating ? "Validating..." : "Start zzzync")
+                        Text(isValidating ? "Checking..." : "Start")
                             .font(.headline)
                     }
                     .frame(maxWidth: .infinity)

@@ -20,7 +20,7 @@ struct CalendarPermissionView: View {
                     .fontWeight(.bold)
                     .foregroundStyle(.white)
 
-                Text("zzzync reads your calendar to find the gap between your first meeting and your biological wake time.")
+                Text("Used to compare wake time vs first meeting.")
                     .font(.subheadline)
                     .foregroundStyle(Color.zzzyncMuted)
                     .multilineTextAlignment(.center)
@@ -28,8 +28,8 @@ struct CalendarPermissionView: View {
             }
 
             VStack(alignment: .leading, spacing: 12) {
-                permRow("Meeting times and density", icon: "clock.fill")
-                permRow("All calendars (including Google)", icon: "calendar.badge.checkmark")
+                permRow("First meeting time", icon: "clock.fill")
+                permRow("All connected calendars", icon: "calendar.badge.checkmark")
             }
             .padding()
             .background(Color.zzzyncSurface)
@@ -42,7 +42,7 @@ struct CalendarPermissionView: View {
                 if granted {
                     HStack {
                         Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-                        Text("Calendar access granted").foregroundStyle(.white)
+                        Text("Calendar connected").foregroundStyle(.white)
                     }
                     Button(action: onNext) {
                         Text("Continue")
@@ -59,7 +59,7 @@ struct CalendarPermissionView: View {
                     } label: {
                         HStack {
                             if isRequesting { ProgressView().tint(Color.zzzyncOnPrimary) }
-                            Text(isRequesting ? "Requesting..." : "Allow Calendar Access")
+                            Text(isRequesting ? "Requesting..." : "Allow Calendar")
                                 .font(.headline)
                         }
                         .frame(maxWidth: .infinity)
@@ -70,7 +70,7 @@ struct CalendarPermissionView: View {
                     }
                     .disabled(isRequesting)
 
-                    Button("Skip for now", action: onNext)
+                    Button("Skip", action: onNext)
                         .font(.subheadline)
                         .foregroundStyle(Color.zzzyncMuted)
                 }

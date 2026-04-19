@@ -3,6 +3,7 @@ import MarkdownUI
 
 struct JetlagMapView: View {
     @State private var vm = JetlagViewModel()
+    @State private var showFullNarrative = false
 
     private var chartData: [SleepMidpointChartData] {
         let firstEventByDay = Dictionary(
@@ -33,21 +34,21 @@ struct JetlagMapView: View {
                         }
 
                         // Chart section
-                        sectionLabel("7-Day Body Clock Drift")
+                        sectionLabel("7-Day Drift")
                         chartCard
                             .padding(.horizontal, 20)
                             .padding(.bottom, 20)
 
                         // Narrative
                         if let result = vm.result {
-                            sectionLabel("Circadian Analysis")
+                            sectionLabel("Insight")
                             narrativeCard(result)
                                 .padding(.horizontal, 20)
                                 .padding(.bottom, 20)
                         }
 
                         if vm.isLoading {
-                            LoadingCardView(message: "Calculating Social Jetlag...")
+                            LoadingCardView(message: "Calculating...")
                                 .padding(.horizontal, 20)
                         }
                         if let error = vm.error {
@@ -60,7 +61,7 @@ struct JetlagMapView: View {
                 }
                 .refreshable { await vm.analyze() }
             }
-            .navigationTitle("Jetlag Map")
+            .navigationTitle("Jetlag")
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Color.zzzyncBackground, for: .navigationBar)
             .toolbar {
@@ -87,7 +88,7 @@ struct JetlagMapView: View {
                     .font(.system(size: 48, weight: .heavy, design: .rounded))
                     .foregroundStyle(.white)
                     .contentTransition(.numericText())
-                Text("hours jetlag")
+                Text("jetlag hrs")
                     .font(.caption)
                     .foregroundStyle(Color.zzzyncMuted)
                     .tracking(0.5)
@@ -135,7 +136,7 @@ struct JetlagMapView: View {
                     Spacer()
                     VStack(spacing: 8) {
                         Image(systemName: "moon.zzz").font(.system(size: 32)).foregroundStyle(Color.zzzyncMuted)
-                        Text("No sleep data yet").font(.subheadline).foregroundStyle(Color.zzzyncMuted)
+                        Text("No sleep data").font(.subheadline).foregroundStyle(Color.zzzyncMuted)
                     }
                     .frame(height: 180)
                     Spacer()
@@ -146,8 +147,8 @@ struct JetlagMapView: View {
 
             // Legend
             HStack(spacing: 20) {
-                legendDot(color: .zzzyncPrimary, label: "Body Clock")
-                legendDot(color: .zzzyncAccent, label: "First Event")
+                legendDot(color: .zzzyncPrimary, label: "Body")
+                legendDot(color: .zzzyncAccent, label: "Calendar")
                 Spacer()
             }
         }
@@ -161,7 +162,7 @@ struct JetlagMapView: View {
             HStack {
                 Image(systemName: "brain.head.profile")
                     .foregroundStyle(Color.zzzyncPrimary)
-                Text("Claude's Analysis")
+                Text("Quick Insight")
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundStyle(.white)
@@ -169,6 +170,16 @@ struct JetlagMapView: View {
             Divider().background(Color.zzzyncSurface2)
             Markdown(result.claudeNarrative)
                 .markdownTheme(.zzzync)
+                .lineLimit(showFullNarrative ? nil : 5)
+            if result.claudeNarrative.count > 180 {
+                Button(showFullNarrative ? "Less" : "More") {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        showFullNarrative.toggle()
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(Color.zzzyncPrimary)
+            }
         }
         .padding(16)
         .background(Color.zzzyncSurface)

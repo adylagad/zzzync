@@ -3,6 +3,7 @@ import MarkdownUI
 
 struct BioProtocolView: View {
     @State private var vm = BioProtocolViewModel()
+    @State private var showFullNarrative = false
 
     var body: some View {
         NavigationStack {
@@ -17,12 +18,12 @@ struct BioProtocolView: View {
                                 .padding(.horizontal, 20).padding(.top, 4).padding(.bottom, 20)
 
                             // Timeline
-                            sectionLabel("Today's Schedule")
+                            sectionLabel("Plan")
                             timelineCard(proto)
                                 .padding(.horizontal, 20).padding(.bottom, 20)
 
                             // Narrative
-                            sectionLabel("Claude's Rationale")
+                            sectionLabel("Insight")
                             narrativeCard(proto.claudeNarrative)
                                 .padding(.horizontal, 20).padding(.bottom, 20)
 
@@ -31,7 +32,7 @@ struct BioProtocolView: View {
                         }
 
                         if vm.isLoading {
-                            LoadingCardView(message: "Building your Bio-Protocol with Claude...")
+                            LoadingCardView(message: "Building plan...")
                                 .padding(.horizontal, 20)
                         }
                         if let error = vm.error {
@@ -44,7 +45,7 @@ struct BioProtocolView: View {
                 }
                 .refreshable { await vm.generate() }
             }
-            .navigationTitle("Bio-Protocol")
+            .navigationTitle("Plan")
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Color.zzzyncBackground, for: .navigationBar)
             .toolbar {
@@ -68,7 +69,7 @@ struct BioProtocolView: View {
 
     private func windowsBanner(_ proto: BioProtocol) -> some View {
         VStack(spacing: 14) {
-            Text("Optimal Windows")
+            Text("Key Windows")
                 .font(.footnote).fontWeight(.semibold)
                 .foregroundStyle(Color.zzzyncMuted)
                 .tracking(0.8).textCase(.uppercase)
@@ -138,11 +139,22 @@ struct BioProtocolView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 Image(systemName: "sparkles").foregroundStyle(Color.zzzyncPrimary)
-                Text("Claude's Analysis")
+                Text("Quick Insight")
                     .font(.subheadline).fontWeight(.semibold).foregroundStyle(.white)
             }
             Divider().background(Color.zzzyncSurface2)
-            Markdown(narrative).markdownTheme(.zzzync)
+            Markdown(narrative)
+                .markdownTheme(.zzzync)
+                .lineLimit(showFullNarrative ? nil : 5)
+            if narrative.count > 180 {
+                Button(showFullNarrative ? "Less" : "More") {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        showFullNarrative.toggle()
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(Color.zzzyncPrimary)
+            }
         }
         .padding(16)
         .background(Color.zzzyncSurface)
@@ -169,7 +181,7 @@ struct BioProtocolView: View {
             VStack(spacing: 8) {
                 Text("No Protocol yet")
                     .font(.title3).fontWeight(.bold).foregroundStyle(.white)
-                Text("Complete the Jetlag analysis first, then pull down to generate your optimized 24-hour protocol.")
+                Text("Run Jetlag first. Then pull to build.")
                     .font(.subheadline).foregroundStyle(Color.zzzyncMuted)
                     .multilineTextAlignment(.center).padding(.horizontal, 40)
             }
