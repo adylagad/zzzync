@@ -13,12 +13,10 @@ struct OnboardingFlow: View {
                     .tag(0)
                 HealthPermissionView(onNext: { step = 2 })
                     .tag(1)
-                CalendarPermissionView(onNext: { step = 3 })
-                    .tag(2)
-                APIKeyView(onComplete: {
+                CalendarPermissionView(onNext: {
                     appState.isOnboardingComplete = true
                 })
-                .tag(3)
+                .tag(2)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .animation(.easeInOut, value: step)

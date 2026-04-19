@@ -8,11 +8,6 @@ final class AppState {
         set { UserDefaults.standard.set(newValue, forKey: "onboardingComplete") }
     }
 
-    var claudeAPIKey: String {
-        get { UserDefaults.standard.string(forKey: "claudeAPIKey") ?? "" }
-        set { UserDefaults.standard.set(newValue, forKey: "claudeAPIKey") }
-    }
-
     var hasHealthKitPermission = false
     var hasCalendarPermission = false
     var isAuthenticatedWithSupabase = false

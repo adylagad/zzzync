@@ -39,6 +39,7 @@ targets:
         NSCalendarsUsageDescription: "zzzync reads your calendar to identify schedule-biology conflicts."
         NSCameraUsageDescription: "zzzync uses your camera to log food for metabolic timing analysis."
         NSPhotoLibraryUsageDescription: "zzzync reads photos to log food for metabolic timing analysis."
+        ClaudeAPIKey: "$(CLAUDE_API_KEY)"
     entitlements:
       path: zzzync/zzzync.entitlements
       properties:
@@ -54,3 +55,8 @@ targets:
         SWIFT_VERSION: "5.9"
         TARGETED_DEVICE_FAMILY: "1"
         IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+      configs:
+        Debug:
+          configFile: Config.xcconfig
+        Release:
+          configFile: Config.xcconfig

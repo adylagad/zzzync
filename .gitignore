@@ -22,6 +22,7 @@ Package.resolved
 # Environment / secrets
 .env
 *.pem
+Config.xcconfig
 
 # Claude
 .mcp.json

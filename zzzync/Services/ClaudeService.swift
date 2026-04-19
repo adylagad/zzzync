@@ -4,7 +4,9 @@ import UIKit
 final class ClaudeService {
     static let shared = ClaudeService()
 
-    private var apiKey: String { UserDefaults.standard.string(forKey: "claudeAPIKey") ?? "" }
+    private var apiKey: String {
+        Bundle.main.object(forInfoDictionaryKey: "ClaudeAPIKey") as? String ?? ""
+    }
     private let endpoint = URL(string: Constants.claudeAPIEndpoint)!
     private let isoFormatter: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()

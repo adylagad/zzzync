@@ -20,6 +20,8 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>ClaudeAPIKey</key>
+	<string>$(CLAUDE_API_KEY)</string>
 	<key>NSCalendarsUsageDescription</key>
 	<string>zzzync reads your calendar to identify schedule-biology conflicts.</string>
 	<key>NSCameraUsageDescription</key>
