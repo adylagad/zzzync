@@ -5,7 +5,14 @@ final class ClaudeService {
     static let shared = ClaudeService()
 
     private var apiKey: String {
-        Bundle.main.object(forInfoDictionaryKey: "ClaudeAPIKey") as? String ?? ""
+        let raw = (Bundle.main.object(forInfoDictionaryKey: "ClaudeAPIKey") as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+        // Guard against unresolved build setting placeholders.
+        if raw.isEmpty || raw == "$(CLAUDE_API_KEY)" || raw == "sk-ant-your-key-here" {
+            return ""
+        }
+        return raw
     }
     private let endpoint = URL(string: Constants.claudeAPIEndpoint)!
     private let isoFormatter: ISO8601DateFormatter = {

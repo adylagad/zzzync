@@ -19,6 +19,9 @@ targets:
     type: application
     platform: iOS
     deploymentTarget: "17.0"
+    configFiles:
+      Debug: Config.xcconfig
+      Release: Config.xcconfig
     sources:
       - path: zzzync
         excludes:
@@ -55,8 +58,3 @@ targets:
         SWIFT_VERSION: "5.9"
         TARGETED_DEVICE_FAMILY: "1"
         IPHONEOS_DEPLOYMENT_TARGET: "17.0"
-      configs:
-        Debug:
-          configFile: Config.xcconfig
-        Release:
-          configFile: Config.xcconfig
