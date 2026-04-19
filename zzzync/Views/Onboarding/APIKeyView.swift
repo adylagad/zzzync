@@ -57,14 +57,14 @@ struct APIKeyView: View {
                     Task { await saveAndContinue() }
                 } label: {
                     HStack {
-                        if isValidating { ProgressView().tint(.white) }
+                        if isValidating { ProgressView().tint(apiKey.hasPrefix("sk-ant") ? Color.zzzyncOnPrimary : .white) }
                         Text(isValidating ? "Validating..." : "Start zzzync")
                             .font(.headline)
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(apiKey.hasPrefix("sk-ant") ? Color.zzzyncPrimary : Color.zzzyncSurface)
-                    .foregroundStyle(apiKey.hasPrefix("sk-ant") ? .white : Color.zzzyncMuted)
+                    .foregroundStyle(apiKey.hasPrefix("sk-ant") ? Color.zzzyncOnPrimary : Color.zzzyncMuted)
                     .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
                 .disabled(apiKey.count < 10 || isValidating)

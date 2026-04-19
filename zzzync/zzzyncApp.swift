@@ -13,6 +13,7 @@ struct ZzzyncApp: App {
                     OnboardingFlow()
                 }
             }
+            .preferredColorScheme(.dark)
             .environment(appState)
             .task {
                 // Establish anonymous Supabase session on every launch

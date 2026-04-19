@@ -50,7 +50,7 @@ struct CalendarPermissionView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color.zzzyncPrimary)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(Color.zzzyncOnPrimary)
                             .clipShape(RoundedRectangle(cornerRadius: 16))
                     }
                 } else {
@@ -58,14 +58,14 @@ struct CalendarPermissionView: View {
                         Task { await requestAccess() }
                     } label: {
                         HStack {
-                            if isRequesting { ProgressView().tint(.white) }
+                            if isRequesting { ProgressView().tint(Color.zzzyncOnPrimary) }
                             Text(isRequesting ? "Requesting..." : "Allow Calendar Access")
                                 .font(.headline)
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.zzzyncPrimary)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color.zzzyncOnPrimary)
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                     }
                     .disabled(isRequesting)

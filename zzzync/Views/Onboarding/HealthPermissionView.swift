@@ -43,7 +43,7 @@ struct HealthPermissionView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color.zzzyncPrimary)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(Color.zzzyncOnPrimary)
                             .clipShape(RoundedRectangle(cornerRadius: 16))
                     }
                 } else {
@@ -51,14 +51,14 @@ struct HealthPermissionView: View {
                         Task { await requestAccess() }
                     } label: {
                         HStack {
-                            if isRequesting { ProgressView().tint(.white) }
+                            if isRequesting { ProgressView().tint(Color.zzzyncOnPrimary) }
                             Text(isRequesting ? "Requesting..." : "Allow Health Access")
                                 .font(.headline)
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.zzzyncPrimary)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color.zzzyncOnPrimary)
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                     }
                     .disabled(isRequesting)

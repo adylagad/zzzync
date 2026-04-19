@@ -73,7 +73,7 @@ struct FoodLogEntryView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding()
                                 .background(Color.zzzyncPrimary)
-                                .foregroundStyle(.white)
+                                .foregroundStyle(Color.zzzyncOnPrimary)
                                 .clipShape(RoundedRectangle(cornerRadius: 14))
                         }
                         .disabled(isAnalyzing || (textInput.isEmpty && selectedImage == nil))

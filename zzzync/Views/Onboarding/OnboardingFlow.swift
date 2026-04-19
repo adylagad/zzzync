@@ -110,7 +110,7 @@ private struct WelcomeStep: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
                     .background(Color.zzzyncPrimary)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color.zzzyncOnPrimary)
                     .clipShape(Capsule())
             }
             .padding(.horizontal, 20)

@@ -1,25 +1,28 @@
 import SwiftUI
 
 extension Color {
-    // Backgrounds — true black like Apple Health dark mode
+    // Core dark palette
     static let zzzyncBackground  = Color.black
-    static let zzzyncSurface     = Color(red: 0.11, green: 0.11, blue: 0.12)   // #1C1C1E
-    static let zzzyncSurface2    = Color(red: 0.17, green: 0.17, blue: 0.18)   // #2C2C2E
-    static let zzzyncMuted       = Color(white: 0.50)
-    static let zzzyncSubtle      = Color(white: 0.30)
+    static let zzzyncSurface     = Color(red: 0.10, green: 0.11, blue: 0.14)   // deep graphite
+    static let zzzyncSurface2    = Color(red: 0.18, green: 0.20, blue: 0.24)   // divider / track
+    static let zzzyncMuted       = Color(red: 0.55, green: 0.57, blue: 0.62)
+    static let zzzyncSubtle      = Color(red: 0.34, green: 0.36, blue: 0.41)
 
-    // Accent palette — each maps to a health domain like Apple Health rings
-    static let zzzyncPrimary     = Color(red: 0.53, green: 0.44, blue: 0.93)   // sleep purple
-    static let zzzyncBlue        = Color(red: 0.20, green: 0.67, blue: 1.00)   // HRV / energy blue
-    static let zzzyncGreen       = Color(red: 0.24, green: 0.93, blue: 0.45)   // metabolic green
-    static let zzzyncAccent      = Color(red: 1.00, green: 0.62, blue: 0.00)   // protocol amber
-    static let zzzyncRed         = Color(red: 1.00, green: 0.27, blue: 0.23)   // warning red
-    static let zzzyncTeal        = Color(red: 0.18, green: 0.83, blue: 0.78)   // recovery teal
+    // Accent palette — dark + green theme with utility accents
+    static let zzzyncPrimary     = Color(red: 0.64, green: 1.00, blue: 0.00)   // neon lime
+    static let zzzyncBlue        = Color(red: 0.13, green: 0.78, blue: 1.00)   // cyan utility
+    static let zzzyncGreen       = Color(red: 0.39, green: 0.89, blue: 0.17)   // supportive green
+    static let zzzyncAccent      = Color(red: 0.98, green: 0.78, blue: 0.20)   // warm highlight
+    static let zzzyncRed         = Color(red: 1.00, green: 0.34, blue: 0.34)   // warning red
+    static let zzzyncTeal        = Color(red: 0.22, green: 0.85, blue: 0.72)   // recovery teal
+
+    // Foreground tokens
+    static let zzzyncOnPrimary   = Color.black
 
     // Score → color mapping
-    static let zzzyncScoreGood   = Color(red: 0.24, green: 0.93, blue: 0.45)
+    static let zzzyncScoreGood   = Color(red: 0.39, green: 0.89, blue: 0.17)
     static let zzzyncScoreWarn   = Color(red: 1.00, green: 0.80, blue: 0.20)
-    static let zzzyncScoreBad    = Color(red: 1.00, green: 0.27, blue: 0.23)
+    static let zzzyncScoreBad    = Color(red: 1.00, green: 0.34, blue: 0.34)
 
     static func syncScoreColor(score: Int) -> Color {
         switch score {
