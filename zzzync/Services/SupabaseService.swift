@@ -10,8 +10,8 @@ final class SupabaseService {
 
     private init() {
         client = SupabaseClient(
-            supabaseURL: URL(string: "https://njjdonmeeumkrtvbyzmp.supabase.co")!,
-            supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qamRvbm1lZXVta3J0dmJ5em1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2MTgzMDQsImV4cCI6MjA5MjE5NDMwNH0.i4jCPyxeohO5HJBnKkpjRe3zwJncUf7XPajD3e-4yr8"
+            supabaseURL: URL(string: Constants.supabaseURL)!,
+            supabaseKey: Constants.supabaseAnonKey
         )
     }
 
@@ -28,6 +28,55 @@ final class SupabaseService {
         get async {
             try? await client.auth.session.user.id
         }
+    }
+
+    var accessToken: String? {
+        get async {
+            try? await client.auth.session.accessToken
+        }
+    }
+
+    struct AccountProfile {
+        let userId: UUID?
+        let email: String?
+        let providers: [String]
+        let isAnonymous: Bool
+
+        static let signedOut = AccountProfile(
+            userId: nil,
+            email: nil,
+            providers: [],
+            isAnonymous: true
+        )
+    }
+
+    func accountProfile() async -> AccountProfile {
+        guard let session = try? await client.auth.session else { return .signedOut }
+        let identities = (try? await client.auth.userIdentities()) ?? []
+        let providers = identities.map { String(describing: $0.provider) }
+            .filter { !$0.isEmpty }
+            .sorted()
+        let isAnonymous = providers.isEmpty || providers == ["anonymous"]
+        return AccountProfile(
+            userId: session.user.id,
+            email: session.user.email,
+            providers: providers,
+            isAnonymous: isAnonymous
+        )
+    }
+
+    func signInWithApple(idToken: String, nonce: String) async throws {
+        _ = try await client.auth.signInWithIdToken(
+            credentials: OpenIDConnectCredentials(
+                provider: .apple,
+                idToken: idToken,
+                nonce: nonce
+            )
+        )
+    }
+
+    func signOut() async throws {
+        try await client.auth.signOut()
     }
 
     // MARK: - Sleep Records
@@ -65,6 +114,21 @@ final class SupabaseService {
             .execute()
     }
 
+    func fetchBiometrics(days: Int = 14) async throws -> [BiometricRecord] {
+        guard let userId = await currentUserId else { return [] }
+        let since = ISO8601DateFormatter().string(
+            from: Calendar.current.date(byAdding: .day, value: -days, to: Date())!
+        )
+        let rows: [BiometricRecordRow] = try await client.from("biometric_records")
+            .select()
+            .eq("user_id", value: userId)
+            .gte("date", value: since)
+            .order("date", ascending: false)
+            .execute()
+            .value
+        return rows.map { $0.toModel() }
+    }
+
     // MARK: - Food Logs
 
     func insertFoodLog(_ log: FoodLog) async throws {
@@ -72,6 +136,15 @@ final class SupabaseService {
         let row = FoodLogRow(from: log, userId: userId)
         try await client.from("food_logs")
             .insert(row)
+            .execute()
+    }
+
+    func upsertFoodLogs(_ logs: [FoodLog]) async throws {
+        guard !logs.isEmpty else { return }
+        guard let userId = await currentUserId else { return }
+        let rows = logs.map { FoodLogRow(from: $0, userId: userId) }
+        try await client.from("food_logs")
+            .upsert(rows, onConflict: "id")
             .execute()
     }
 
@@ -152,6 +225,93 @@ final class SupabaseService {
             .value
         return rows.first?.toModel()
     }
+
+    // MARK: - Cloud Snapshot (Phase 2 sync)
+
+    struct CloudSnapshot {
+        let sleepRows: [SleepRecordRow]
+        let biometricRows: [BiometricRecordRow]
+        let foodRows: [FoodLogRow]
+        let jetlagRow: JetlagResultRow?
+        let energyRow: EnergyForecastRow?
+        let bioProtocolRow: BioProtocolRow?
+
+        static let empty = CloudSnapshot(
+            sleepRows: [],
+            biometricRows: [],
+            foodRows: [],
+            jetlagRow: nil,
+            energyRow: nil,
+            bioProtocolRow: nil
+        )
+    }
+
+    func fetchCloudSnapshot() async throws -> CloudSnapshot {
+        guard let userId = await currentUserId else { return .empty }
+
+        async let sleepRowsTask: [SleepRecordRow] = client.from("sleep_records")
+            .select()
+            .eq("user_id", value: userId)
+            .order("date", ascending: false)
+            .execute()
+            .value
+
+        async let biometricRowsTask: [BiometricRecordRow] = client.from("biometric_records")
+            .select()
+            .eq("user_id", value: userId)
+            .order("date", ascending: false)
+            .execute()
+            .value
+
+        async let foodRowsTask: [FoodLogRow] = client.from("food_logs")
+            .select()
+            .eq("user_id", value: userId)
+            .order("timestamp", ascending: false)
+            .execute()
+            .value
+
+        async let jetlagRowsTask: [JetlagResultRow] = client.from("social_jetlag_results")
+            .select()
+            .eq("user_id", value: userId)
+            .order("updated_at", ascending: false)
+            .limit(1)
+            .execute()
+            .value
+
+        async let energyRowsTask: [EnergyForecastRow] = client.from("energy_forecasts")
+            .select()
+            .eq("user_id", value: userId)
+            .order("updated_at", ascending: false)
+            .limit(1)
+            .execute()
+            .value
+
+        async let bioRowsTask: [BioProtocolRow] = client.from("bio_protocols")
+            .select()
+            .eq("user_id", value: userId)
+            .order("updated_at", ascending: false)
+            .limit(1)
+            .execute()
+            .value
+
+        let (sleepRows, biometricRows, foodRows, jetlagRows, energyRows, bioRows) = try await (
+            sleepRowsTask,
+            biometricRowsTask,
+            foodRowsTask,
+            jetlagRowsTask,
+            energyRowsTask,
+            bioRowsTask
+        )
+
+        return CloudSnapshot(
+            sleepRows: sleepRows,
+            biometricRows: biometricRows,
+            foodRows: foodRows,
+            jetlagRow: jetlagRows.first,
+            energyRow: energyRows.first,
+            bioProtocolRow: bioRows.first
+        )
+    }
 }
 
 // MARK: - Row types (Codable structs that map to DB columns)
@@ -167,6 +327,7 @@ struct SleepRecordRow: Codable {
     var duration_minutes: Int
     var deep_sleep_minutes: Int
     var rem_sleep_minutes: Int
+    var updated_at: String?
 
     init(from m: SleepRecord, userId: UUID) {
         id = m.id
@@ -190,6 +351,8 @@ struct SleepRecordRow: Codable {
             remSleepMinutes: rem_sleep_minutes
         )
     }
+
+    var updatedAtDate: Date? { parseISODate(updated_at) }
 }
 
 struct BiometricRecordRow: Codable {
@@ -199,6 +362,7 @@ struct BiometricRecordRow: Codable {
     var hrv_ms: Double?
     var rhr_bpm: Double?
     var active_energy_kcal: Double?
+    var updated_at: String?
 
     init(from m: BiometricRecord, userId: UUID) {
         id = m.id
@@ -208,6 +372,18 @@ struct BiometricRecordRow: Codable {
         rhr_bpm = m.rhrBpm
         active_energy_kcal = m.activeEnergyKcal
     }
+
+    func toModel() -> BiometricRecord {
+        BiometricRecord(
+            id: id,
+            date: dateFormatter.date(from: date) ?? Date(),
+            hrvMs: hrv_ms,
+            rhrBpm: rhr_bpm,
+            activeEnergyKcal: active_energy_kcal
+        )
+    }
+
+    var updatedAtDate: Date? { parseISODate(updated_at) }
 }
 
 struct FoodLogRow: Codable {
@@ -220,6 +396,7 @@ struct FoodLogRow: Codable {
     var hours_from_digestive_sunset: Double?
     var metabolic_insight: String?
     var claude_narrative: String?
+    var updated_at: String?
 
     init(from m: FoodLog, userId: UUID) {
         id = m.id
@@ -256,6 +433,8 @@ struct FoodLogRow: Codable {
             auditResult: audit
         )
     }
+
+    var updatedAtDate: Date? { parseISODate(updated_at) }
 }
 
 struct JetlagResultRow: Codable {
@@ -268,6 +447,7 @@ struct JetlagResultRow: Codable {
     var chronotype_drift: String
     var claude_narrative: String
     var score: Int
+    var updated_at: String?
 
     init(from m: SocialJetlagResult, userId: UUID) {
         id = UUID()
@@ -292,6 +472,8 @@ struct JetlagResultRow: Codable {
             score: score
         )
     }
+
+    var updatedAtDate: Date? { parseISODate(updated_at) }
 }
 
 struct EnergyForecastRow: Codable {
@@ -301,6 +483,7 @@ struct EnergyForecastRow: Codable {
     var hourly_energy_level: [String: Double]   // JSON keys must be strings
     var cognitive_clashes: [CognitiveClashJSON]
     var claude_narrative: String
+    var updated_at: String?
 
     struct CognitiveClashJSON: Codable {
         var event_title: String
@@ -352,6 +535,8 @@ struct EnergyForecastRow: Codable {
             claudeNarrative: claude_narrative
         )
     }
+
+    var updatedAtDate: Date? { parseISODate(updated_at) }
 }
 
 struct BioProtocolRow: Codable {
@@ -364,6 +549,7 @@ struct BioProtocolRow: Codable {
     var digestive_sunset: String
     var protocol_items: [ProtocolItemJSON]
     var claude_narrative: String
+    var updated_at: String?
 
     struct ProtocolItemJSON: Codable {
         var time: String
@@ -406,6 +592,8 @@ struct BioProtocolRow: Codable {
             claudeNarrative: claude_narrative
         )
     }
+
+    var updatedAtDate: Date? { parseISODate(updated_at) }
 }
 
 // Shared date formatter for DATE columns (no time component)
@@ -415,3 +603,8 @@ private let dateFormatter: DateFormatter = {
     f.locale = Locale(identifier: "en_US_POSIX")
     return f
 }()
+
+private func parseISODate(_ value: String?) -> Date? {
+    guard let value, !value.isEmpty else { return nil }
+    return iso.date(from: value)
+}

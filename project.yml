@@ -19,9 +19,6 @@ targets:
     type: application
     platform: iOS
     deploymentTarget: "17.0"
-    configFiles:
-      Debug: Config.xcconfig
-      Release: Config.xcconfig
     sources:
       - path: zzzync
         excludes:
@@ -42,10 +39,11 @@ targets:
         NSCalendarsUsageDescription: "zzzync reads your calendar to identify schedule-biology conflicts."
         NSCameraUsageDescription: "zzzync uses your camera to log food for metabolic timing analysis."
         NSPhotoLibraryUsageDescription: "zzzync reads photos to log food for metabolic timing analysis."
-        ClaudeAPIKey: "$(CLAUDE_API_KEY)"
     entitlements:
       path: zzzync/zzzync.entitlements
       properties:
+        com.apple.developer.applesignin:
+          - Default
         com.apple.developer.healthkit: true
     dependencies:
       - package: MarkdownUI
@@ -54,7 +52,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.zzzync.app
-        DEVELOPMENT_TEAM: ""
+        DEVELOPMENT_TEAM: "U9GQY85ZBA"
         SWIFT_VERSION: "5.9"
         TARGETED_DEVICE_FAMILY: "1"
         IPHONEOS_DEPLOYMENT_TARGET: "17.0"
