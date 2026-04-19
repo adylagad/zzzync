@@ -1,0 +1,58 @@
+name: zzzync
+options:
+  bundleIdPrefix: com.zzzync
+  deploymentTarget:
+    iOS: "17.0"
+  defaultConfig: Debug
+  xcodeVersion: "15"
+
+packages:
+  MarkdownUI:
+    url: https://github.com/gonzalezreal/swift-markdown-ui
+    from: "2.4.0"
+  Supabase:
+    url: https://github.com/supabase/supabase-swift
+    from: "2.0.0"
+
+targets:
+  zzzync:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: zzzync
+        excludes:
+          - "**/.DS_Store"
+    resources:
+      - path: zzzync/Resources/Assets.xcassets
+    info:
+      path: zzzync/Info.plist
+      properties:
+        CFBundleDisplayName: zzzync
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSHealthShareUsageDescription: "zzzync reads your sleep, heart rate, and HRV data to calculate your Social Jetlag score."
+        NSHealthUpdateUsageDescription: "zzzync does not write health data."
+        NSCalendarsUsageDescription: "zzzync reads your calendar to identify schedule-biology conflicts."
+        NSCameraUsageDescription: "zzzync uses your camera to log food for metabolic timing analysis."
+        NSPhotoLibraryUsageDescription: "zzzync reads photos to log food for metabolic timing analysis."
+    entitlements:
+      path: zzzync/zzzync.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access:
+          - health-records
+    dependencies:
+      - package: MarkdownUI
+      - package: Supabase
+        product: Supabase
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.zzzync.app
+        DEVELOPMENT_TEAM: ""
+        SWIFT_VERSION: "5.9"
+        TARGETED_DEVICE_FAMILY: "1"
+        IPHONEOS_DEPLOYMENT_TARGET: "17.0"
