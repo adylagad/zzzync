@@ -2,6 +2,14 @@ import Foundation
 import UIKit
 
 final class ClaudeService {
+    struct ChatResponse {
+        let text: String
+        let responseID: String
+        let model: String
+        let inputTokens: Int
+        let outputTokens: Int
+    }
+
     static let shared = ClaudeService()
 
     private let endpoint = URL(string: Constants.claudeEndpoint)!
@@ -22,7 +30,6 @@ final class ClaudeService {
         let midpoints = sleepRecords.map { $0.midpoint }
         let avgMidpoint = midpoints.average() ?? Date()
 
-        let firstEvents = calendarEvents.sorted { $0.startDate < $1.startDate }
         let firstEventTimes = Dictionary(grouping: calendarEvents) {
             Calendar.current.startOfDay(for: $0.startDate)
         }.compactMapValues { events in
@@ -377,26 +384,177 @@ final class ClaudeService {
         )
     }
 
-    // MARK: - Core API call
+    func chatWithAppContext(
+        question: String,
+        recentTurns: [(role: String, text: String)],
+        sleepRecords: [SleepRecord],
+        biometrics: [BiometricRecord],
+        foodLogs: [FoodLog],
+        jetlagResult: SocialJetlagResult?,
+        forecast: EnergyForecast?,
+        todayEvents: [CalendarEvent],
+        emailStressSignals: [EmailStressSignal] = []
+    ) async throws -> ChatResponse {
+        let sleepText = sleepRecords.suffix(7).map { r in
+            "\(r.date.shortDateString): \(r.durationMinutes)m, bed \(r.bedtime.timeString), wake \(r.wakeTime.timeString)"
+        }.joined(separator: "\n")
 
-    private func sendMessage(prompt: String) async throws -> String {
-        let content: [[String: Any]] = [["type": "text", "text": prompt]]
-        return try await sendMessage(contentBlocks: content)
+        let biometricsText = biometrics.suffix(7).map { b in
+            "\(b.date.shortDateString): HRV \(b.hrvMs.map { String(format: "%.0f", $0) } ?? "N/A")ms, RHR \(b.rhrBpm.map { String(format: "%.0f", $0) } ?? "N/A")bpm"
+        }.joined(separator: "\n")
+
+        let mealText = foodLogs.suffix(8).map { log in
+            let verdict = log.auditResult?.timingVerdict.rawValue ?? "unknown"
+            return "\(log.timestamp.shortDateString) \(log.timestamp.timeString): \(log.description) [\(verdict)]"
+        }.joined(separator: "\n")
+
+        let jetlagText: String = {
+            guard let jetlagResult else { return "N/A" }
+            return "Score \(jetlagResult.score), jetlag \(String(format: "%.1f", jetlagResult.jetlagHours))h"
+        }()
+
+        let forecastText: String = {
+            guard let forecast else { return "N/A" }
+            let topClashes = forecast.cognitiveClashes.prefix(3).map {
+                "\($0.eventTitle) @ \($0.eventStart.timeString), \($0.severity.rawValue)"
+            }.joined(separator: "\n")
+            return topClashes.isEmpty ? "No clashes" : topClashes
+        }()
+
+        let eventsText = todayEvents.prefix(8).map { e in
+            "\(e.startDate.timeString)-\(e.endDate.timeString): \(e.title)"
+        }.joined(separator: "\n")
+
+        let emailText = emailStressSignals.prefix(6).map { s in
+            "\(s.senderEmail): stress \(s.stressScore), unread \(s.unreadThreads)"
+        }.joined(separator: "\n")
+
+        let historyText = recentTurns.suffix(6).map { turn in
+            let role = turn.role.lowercased() == "assistant" ? "Assistant" : "User"
+            return "\(role): \(turn.text)"
+        }.joined(separator: "\n")
+
+        let prompt = """
+        You are zzzync AI, a concise health-performance assistant.
+        Answer the user's question using app signals first, then practical steps.
+
+        Style rules:
+        - Keep it short and clean.
+        - Max 6 lines total.
+        - No long paragraphs.
+        - Use plain language.
+        - If data is missing, say "Data gap:" in one short line.
+
+        RECENT CHAT:
+        \(historyText.isEmpty ? "No prior chat." : historyText)
+
+        CURRENT QUESTION:
+        \(question)
+
+        APP SIGNALS:
+        Sleep:
+        \(sleepText.isEmpty ? "No sleep data" : sleepText)
+
+        Biometrics:
+        \(biometricsText.isEmpty ? "No biometric data" : biometricsText)
+
+        Food & timing:
+        \(mealText.isEmpty ? "No food logs" : mealText)
+
+        Jetlag:
+        \(jetlagText)
+
+        Energy clashes:
+        \(forecastText)
+
+        Today events:
+        \(eventsText.isEmpty ? "No events" : eventsText)
+
+        Email pressure:
+        \(emailText.isEmpty ? "No email pressure data" : emailText)
+        """
+
+        let chatSystemPrompt = """
+        You are zzzync AI Coach.
+        Give direct, concise, practical answers.
+        Use app signals when relevant.
+        Do not output JSON.
+        """
+
+        return try await sendMessageDetailed(prompt: prompt, systemPrompt: chatSystemPrompt)
     }
 
-    private func sendMessage(contentBlocks: [[String: Any]]) async throws -> String {
+    // MARK: - Core API call
+
+    private func sendMessage(
+        prompt: String,
+        systemPrompt: String = SystemPrompts.chronobiologist
+    ) async throws -> String {
+        try await sendMessageDetailed(prompt: prompt, systemPrompt: systemPrompt).text
+    }
+
+    private func sendMessageDetailed(
+        prompt: String,
+        systemPrompt: String = SystemPrompts.chronobiologist
+    ) async throws -> ChatResponse {
+        let content: [[String: Any]] = [["type": "text", "text": prompt]]
+        return try await sendMessageDetailed(contentBlocks: content, systemPrompt: systemPrompt)
+    }
+
+    private func sendMessage(
+        contentBlocks: [[String: Any]],
+        systemPrompt: String = SystemPrompts.chronobiologist
+    ) async throws -> String {
+        try await sendMessageDetailed(contentBlocks: contentBlocks, systemPrompt: systemPrompt).text
+    }
+
+    private func sendMessageDetailed(
+        contentBlocks: [[String: Any]],
+        systemPrompt: String = SystemPrompts.chronobiologist
+    ) async throws -> ChatResponse {
         let apiKey = Constants.claudeAPIKey
         guard !apiKey.isEmpty else {
             throw ClaudeServiceError.noAPIKey
         }
 
+        let modelCandidates = [Constants.claudeModel] + Constants.claudeModelFallbacks.filter {
+            $0 != Constants.claudeModel
+        }
+        var lastModelError: ClaudeServiceError?
+
+        for model in modelCandidates {
+            do {
+                return try await sendSingleRequest(
+                    contentBlocks: contentBlocks,
+                    systemPrompt: systemPrompt,
+                    apiKey: apiKey,
+                    model: model
+                )
+            } catch let error as ClaudeServiceError {
+                if case .apiError(let message) = error, isModelSelectionError(message) {
+                    lastModelError = error
+                    continue
+                }
+                throw error
+            } catch {
+                throw error
+            }
+        }
+
+        throw lastModelError ?? .apiError("No compatible Claude model available.")
+    }
+
+    private func sendSingleRequest(
+        contentBlocks: [[String: Any]],
+        systemPrompt: String,
+        apiKey: String,
+        model: String
+    ) async throws -> ChatResponse {
         let body: [String: Any] = [
-            "model": Constants.claudeModel,
+            "model": model,
             "max_tokens": Constants.claudeMaxTokens,
-            "system": SystemPrompts.chronobiologist,
-            "messages": [
-                ["role": "user", "content": contentBlocks]
-            ]
+            "system": systemPrompt,
+            "messages": [["role": "user", "content": contentBlocks]]
         ]
 
         var request = URLRequest(url: endpoint)
@@ -408,8 +566,12 @@ final class ClaudeService {
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
-        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-            let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
+        guard let http = response as? HTTPURLResponse else {
+            throw ClaudeServiceError.malformedResponse
+        }
+
+        guard http.statusCode == 200 else {
+            let msg = parseAPIErrorMessage(data) ?? String(data: data, encoding: .utf8) ?? "Unknown error"
             throw ClaudeServiceError.apiError(msg)
         }
 
@@ -420,7 +582,38 @@ final class ClaudeService {
             throw ClaudeServiceError.malformedResponse
         }
 
-        return text
+        let usage = json["usage"] as? [String: Any]
+        let responseID = (json["id"] as? String) ?? "unknown"
+        let resolvedModel = (json["model"] as? String) ?? model
+        let inputTokens = (usage?["input_tokens"] as? Int) ?? 0
+        let outputTokens = (usage?["output_tokens"] as? Int) ?? 0
+
+        return ChatResponse(
+            text: text,
+            responseID: responseID,
+            model: resolvedModel,
+            inputTokens: inputTokens,
+            outputTokens: outputTokens
+        )
+    }
+
+    private func parseAPIErrorMessage(_ data: Data) -> String? {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+        if let error = json["error"] as? [String: Any],
+           let message = error["message"] as? String {
+            return message
+        }
+        return nil
+    }
+
+    private func isModelSelectionError(_ message: String) -> Bool {
+        let lower = message.lowercased()
+        return (lower.contains("model") && lower.contains("not found"))
+            || lower.contains("invalid model")
+            || lower.contains("unknown model")
+            || lower.contains("does not exist")
     }
 
     private func parseJSON<T: Decodable>(_ text: String, as type: T.Type) throws -> T {

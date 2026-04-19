@@ -10,6 +10,11 @@ struct ContentView: View {
                     Label("Dashboard", systemImage: "house.fill")
                 }
 
+            AICausalView()
+                .tabItem {
+                    Label("AI", systemImage: "sparkles")
+                }
+
             JetlagMapView()
                 .tabItem {
                     Label("Jetlag", systemImage: "moon.fill")
@@ -23,11 +28,6 @@ struct ContentView: View {
             BioProtocolView()
                 .tabItem {
                     Label("Protocol", systemImage: "clock.badge.checkmark.fill")
-                }
-
-            AICausalView()
-                .tabItem {
-                    Label("AI", systemImage: "sparkles")
                 }
 
             SettingsView()

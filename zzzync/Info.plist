@@ -22,6 +22,8 @@
 	<string>1</string>
 	<key>CLAUDE_API_KEY</key>
 	<string>$(CLAUDE_API_KEY)</string>
+	<key>CLAUDE_MODEL</key>
+	<string>$(CLAUDE_MODEL)</string>
 	<key>NSCalendarsUsageDescription</key>
 	<string>zzzync reads your calendar to identify schedule-biology conflicts.</string>
 	<key>NSCameraUsageDescription</key>

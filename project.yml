@@ -43,6 +43,7 @@ targets:
         NSCameraUsageDescription: "zzzync uses your camera to log food for metabolic timing analysis."
         NSPhotoLibraryUsageDescription: "zzzync reads photos to log food for metabolic timing analysis."
         CLAUDE_API_KEY: "$(CLAUDE_API_KEY)"
+        CLAUDE_MODEL: "$(CLAUDE_MODEL)"
     entitlements:
       path: zzzync/zzzync.entitlements
       properties:

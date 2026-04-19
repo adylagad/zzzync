@@ -3,9 +3,11 @@ import SwiftUI
 struct AICausalView: View {
     @State private var vm = AICausalViewModel()
 
-    private let columns = [
-        GridItem(.flexible(), spacing: 10),
-        GridItem(.flexible(), spacing: 10)
+    private let quickPrompts = [
+        "Why am I tired?",
+        "What should I eat now?",
+        "How do I recover in 2 hours?",
+        "When should I take caffeine?"
     ]
 
     var body: some View {
@@ -13,228 +15,184 @@ struct AICausalView: View {
             ZStack {
                 Color.zzzyncBackground.ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: 0) {
-                        questionCard
-                            .padding(.horizontal, 20)
-                            .padding(.top, 8)
-                            .padding(.bottom, 20)
+                VStack(spacing: 0) {
+                    signalsStrip
+                        .padding(.top, 8)
 
-                        sectionLabel("Signals")
-                        signalsGrid
-                            .padding(.horizontal, 20)
-                            .padding(.bottom, 20)
+                    quickPromptsStrip
+                        .padding(.top, 10)
 
-                        if let answer = vm.answer {
-                            sectionLabel("Answer")
-                            summaryCard(answer)
-                                .padding(.horizontal, 20)
-                                .padding(.bottom, 14)
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            VStack(spacing: 10) {
+                                ForEach(vm.messages) { message in
+                                    messageBubble(message)
+                                        .id(message.id)
+                                }
 
-                            causesCard(answer.causes)
-                                .padding(.horizontal, 20)
-                                .padding(.bottom, 14)
+                                if vm.isLoading {
+                                    typingBubble
+                                }
 
-                            actionsCard(answer.actions)
-                                .padding(.horizontal, 20)
-                                .padding(.bottom, 20)
+                                if let error = vm.error, !error.isEmpty {
+                                    InsightBubble(
+                                        text: error.conciseInsight(maxWords: 20),
+                                        icon: "exclamationmark.triangle.fill",
+                                        color: .zzzyncRed
+                                    )
+                                    .padding(.horizontal, 20)
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.top, 12)
+                            .padding(.bottom, 16)
                         }
-
-                        if vm.isLoading {
-                            LoadingCardView(message: "Finding causes...")
-                                .padding(.horizontal, 20)
-                                .padding(.bottom, 14)
+                        .onChange(of: vm.messages.count) {
+                            if let last = vm.messages.last {
+                                withAnimation(.easeOut(duration: 0.2)) {
+                                    proxy.scrollTo(last.id, anchor: .bottom)
+                                }
+                            }
                         }
-
-                        if let error = vm.error, !error.isEmpty {
-                            InsightBubble(text: error, icon: "exclamationmark.triangle.fill", color: .zzzyncRed)
-                                .padding(.horizontal, 20)
-                                .padding(.bottom, 14)
+                        .onChange(of: vm.isLoading) {
+                            if vm.isLoading, let last = vm.messages.last {
+                                withAnimation(.easeOut(duration: 0.2)) {
+                                    proxy.scrollTo(last.id, anchor: .bottom)
+                                }
+                            }
                         }
                     }
                 }
-                .refreshable { await vm.ask() }
             }
-            .navigationTitle("AI")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationTitle("AI Coach")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color.zzzyncBackground, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button { Task { await vm.ask() } } label: {
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundStyle(Color.zzzyncPrimary)
-                    }
-                    .disabled(vm.isLoading)
-                }
-            }
+            .safeAreaInset(edge: .bottom) { composerBar }
         }
         .onAppear { vm.load() }
     }
 
-    private var questionCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Causal Engine")
-                .font(.headline)
-                .foregroundStyle(.white)
-
-            TextField("Ask: Why am I tired?", text: $vm.question, axis: .vertical)
-                .textInputAutocapitalization(.sentences)
-                .autocorrectionDisabled(false)
-                .lineLimit(1...3)
-                .padding(12)
-                .background(Color.zzzyncSurface2)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-
-            HStack(spacing: 10) {
-                Button {
-                    vm.useDefaultQuestion()
-                } label: {
-                    Text("Why am I tired?")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(Color.zzzyncPrimary)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
-                        .background(Color.zzzyncPrimary.opacity(0.12))
-                        .clipShape(Capsule())
-                }
-
-                Spacer()
-
-                Button {
-                    Task { await vm.ask() }
-                } label: {
-                    Text("Ask AI")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Color.zzzyncOnPrimary)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .background(Color.zzzyncPrimary)
-                        .clipShape(Capsule())
-                }
-                .disabled(vm.isLoading)
-            }
-        }
-        .padding(16)
-        .background(Color.zzzyncSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-    }
-
-    private var signalsGrid: some View {
-        LazyVGrid(columns: columns, spacing: 10) {
-            ForEach(vm.signalChips) { chip in
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(chip.title)
-                        .font(.caption)
-                        .foregroundStyle(Color.zzzyncMuted)
-                    Text(chip.value)
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(chip.color)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(12)
-                .background(Color.zzzyncSurface)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            }
-        }
-    }
-
-    private func summaryCard(_ answer: FatigueAnswer) -> some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle().fill(Color.zzzyncPrimary.opacity(0.16)).frame(width: 36, height: 36)
-                Image(systemName: "bolt.heart.fill")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Color.zzzyncPrimary)
-            }
-            Text(answer.summary.conciseInsight(maxWords: 14))
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.white)
-            Spacer()
-        }
-        .padding(14)
-        .background(Color.zzzyncSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-    }
-
-    private func causesCard(_ causes: [FatigueCause]) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ForEach(Array(causes.prefix(4).enumerated()), id: \.element.id) { index, cause in
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 8) {
-                        Text(cause.title)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.white)
-                        Spacer()
-                        Text("\(cause.impactScore)")
+    private var signalsStrip: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(vm.signalChips) { chip in
+                    HStack(spacing: 6) {
+                        Text(chip.title)
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(Color.zzzyncMuted)
+                        Text(chip.value)
                             .font(.caption.weight(.bold))
-                            .foregroundStyle(Color.zzzyncAccent)
+                            .foregroundStyle(chip.color)
                     }
-
-                    Text(cause.evidence.conciseInsight(maxWords: 10))
-                        .font(.caption)
-                        .foregroundStyle(Color.zzzyncMuted)
-
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            Capsule()
-                                .fill(Color.zzzyncSurface2)
-                                .frame(height: 6)
-                            Capsule()
-                                .fill(Color.zzzyncAccent)
-                                .frame(
-                                    width: geo.size.width * CGFloat(cause.impactScore) / 100.0,
-                                    height: 6
-                                )
-                        }
-                    }
-                    .frame(height: 6)
-                }
-                .padding(.vertical, 12)
-
-                if index < min(causes.count, 4) - 1 {
-                    Divider().background(Color.zzzyncSurface2)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(Color.zzzyncSurface)
+                    .clipShape(Capsule())
                 }
             }
+            .padding(.horizontal, 16)
         }
-        .padding(.horizontal, 14)
-        .background(Color.zzzyncSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
-    private func actionsCard(_ actions: [String]) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Do Next")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.white)
+    private var quickPromptsStrip: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(quickPrompts, id: \.self) { prompt in
+                    Button {
+                        Task { await vm.sendQuickPrompt(prompt) }
+                    } label: {
+                        Text(prompt)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Color.zzzyncPrimary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .background(Color.zzzyncPrimary.opacity(0.12))
+                            .clipShape(Capsule())
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+        }
+    }
 
-            ForEach(Array(actions.prefix(3).enumerated()), id: \.offset) { idx, action in
-                HStack(spacing: 10) {
-                    Text("\(idx + 1)")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(Color.zzzyncOnPrimary)
-                        .frame(width: 18, height: 18)
-                        .background(Color.zzzyncPrimary)
-                        .clipShape(Circle())
-                    Text(action.conciseInsight(maxWords: 7))
+    private func messageBubble(_ message: AICausalViewModel.ChatMessage) -> some View {
+        HStack {
+            if message.role == .assistant {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("AI")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(Color.zzzyncPrimary)
+                    Text(message.text)
                         .font(.subheadline)
                         .foregroundStyle(.white)
-                    Spacer()
+                        .textSelection(.enabled)
+                    if let metadata = message.metadata, !metadata.isEmpty {
+                        Text(metadata)
+                            .font(.caption2)
+                            .foregroundStyle(Color.zzzyncMuted)
+                    }
                 }
+                .padding(12)
+                .background(Color.zzzyncSurface)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .frame(maxWidth: 300, alignment: .leading)
+
+                Spacer(minLength: 36)
+            } else {
+                Spacer(minLength: 36)
+
+                Text(message.text)
+                    .font(.subheadline)
+                    .foregroundStyle(Color.zzzyncOnPrimary)
+                    .padding(12)
+                    .background(Color.zzzyncPrimary)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .frame(maxWidth: 300, alignment: .trailing)
             }
         }
-        .padding(14)
-        .background(Color.zzzyncSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
-    private func sectionLabel(_ text: String) -> some View {
-        Text(text)
-            .font(.title3)
-            .fontWeight(.bold)
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 20)
-            .padding(.bottom, 10)
+    private var typingBubble: some View {
+        HStack {
+            HStack(spacing: 8) {
+                ProgressView().tint(Color.zzzyncPrimary).scaleEffect(0.75)
+                Text("Thinking…")
+                    .font(.caption)
+                    .foregroundStyle(Color.zzzyncMuted)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(Color.zzzyncSurface)
+            .clipShape(Capsule())
+            Spacer(minLength: 36)
+        }
+    }
+
+    private var composerBar: some View {
+        HStack(spacing: 10) {
+            TextField("Ask anything...", text: $vm.inputText, axis: .vertical)
+                .lineLimit(1...4)
+                .textInputAutocapitalization(.sentences)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(Color.zzzyncSurface2)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+            Button {
+                Task { await vm.send() }
+            } label: {
+                Image(systemName: "arrow.up")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(Color.zzzyncOnPrimary)
+                    .frame(width: 34, height: 34)
+                    .background(Color.zzzyncPrimary)
+                    .clipShape(Circle())
+            }
+            .disabled(vm.isLoading || vm.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .opacity(vm.isLoading || vm.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.45 : 1)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Color.zzzyncSurface)
     }
 }

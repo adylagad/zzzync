@@ -4,6 +4,19 @@ import SwiftUI
 
 @Observable
 final class AICausalViewModel {
+    struct ChatMessage: Identifiable {
+        enum Role {
+            case user
+            case assistant
+        }
+
+        let id = UUID()
+        let role: Role
+        let text: String
+        let metadata: String?
+        let createdAt: Date
+    }
+
     struct SignalChip: Identifiable {
         let id = UUID()
         let title: String
@@ -11,8 +24,8 @@ final class AICausalViewModel {
         let color: Color
     }
 
-    var question = "Why am I tired?"
-    var answer: FatigueAnswer?
+    var inputText = ""
+    var messages: [ChatMessage] = []
     var isLoading = false
     var error: String?
     var signalChips: [SignalChip] = []
@@ -21,12 +34,26 @@ final class AICausalViewModel {
         if HackathonDemoScenario.isEnabled {
             HackathonDemoScenario.installFixedDataIfNeeded(force: false)
         }
-        answer = LocalStore.shared.loadFatigueAnswer()
         refreshSignalChips()
+        if messages.isEmpty {
+            messages = [
+                ChatMessage(
+                    role: .assistant,
+                    text: "Ask me anything about your energy, sleep, food, or focus.",
+                    metadata: "Claude live",
+                    createdAt: Date()
+                )
+            ]
+        }
     }
 
-    func ask() async {
+    func send() async {
+        let trimmed = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, !isLoading else { return }
+
         await MainActor.run {
+            messages.append(ChatMessage(role: .user, text: trimmed, metadata: nil, createdAt: Date()))
+            inputText = ""
             isLoading = true
             error = nil
         }
@@ -54,10 +81,16 @@ final class AICausalViewModel {
             let events = CalendarService.shared.fetchTodayEvents()
             let emailSignals = LocalStore.shared.loadEmailStressSignals()
 
-            let response = try await ClaudeService.shared.explainFatigue(
-                question: question.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                    ? "Why am I tired?"
-                    : question,
+            let conversation = messages.suffix(8).map { message in
+                (
+                    role: message.role == .user ? "user" : "assistant",
+                    text: message.text
+                )
+            }
+
+            let response = try await ClaudeService.shared.chatWithAppContext(
+                question: trimmed,
+                recentTurns: conversation,
                 sleepRecords: sleep,
                 biometrics: biometrics,
                 foodLogs: foodLogs,
@@ -67,24 +100,39 @@ final class AICausalViewModel {
                 emailStressSignals: emailSignals
             )
 
-            LocalStore.shared.saveFatigueAnswer(response)
-
             await MainActor.run {
-                answer = response
+                messages.append(
+                    ChatMessage(
+                        role: .assistant,
+                        text: response.text.conciseInsight(maxWords: 85),
+                        metadata: "Claude live • \(response.model) • \(response.inputTokens) in / \(response.outputTokens) out • \(String(response.responseID.prefix(10)))",
+                        createdAt: Date()
+                    )
+                )
                 refreshSignalChips()
                 isLoading = false
             }
         } catch {
             await MainActor.run {
                 self.error = error.localizedDescription
+                self.messages.append(
+                    ChatMessage(
+                        role: .assistant,
+                        text: "Claude call failed. Check API key/model and try again.",
+                        metadata: "No live response",
+                        createdAt: Date()
+                    )
+                )
                 self.isLoading = false
                 self.refreshSignalChips()
             }
         }
     }
 
-    func useDefaultQuestion() {
-        question = "Why am I tired?"
+    func sendQuickPrompt(_ prompt: String) async {
+        guard !isLoading else { return }
+        inputText = prompt
+        await send()
     }
 
     private func refreshSignalChips() {
