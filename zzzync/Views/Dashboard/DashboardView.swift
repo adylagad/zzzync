@@ -10,105 +10,68 @@ struct DashboardView: View {
                 Color.zzzyncBackground.ignoresSafeArea()
 
                 ScrollView {
-                    VStack(spacing: 20) {
-                        // Hero: Sync Score
+                    VStack(spacing: 0) {
+                        // Hero ring
                         heroSection
+                            .padding(.horizontal, 20)
+                            .padding(.top, 8)
+                            .padding(.bottom, 24)
 
-                        // Jetlag card
+                        // Quick metrics row
                         if let jetlag = vm.jetlagResult {
-                            summaryCard(
-                                title: "Social Jetlag",
-                                icon: "moon.fill",
-                                accent: Color.zzzyncPrimary
-                            ) {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text(jetlag.chronotypeDrift)
-                                        .font(.subheadline)
-                                        .foregroundStyle(.white.opacity(0.85))
-                                    HStack {
-                                        Text(String(format: "%.1fh jetlag", abs(jetlag.jetlagHours)))
-                                            .font(.caption)
-                                            .foregroundStyle(Color.zzzyncMuted)
-                                        Spacer()
-                                        ScoreBadge(score: jetlag.score)
-                                    }
-                                }
-                            }
+                            metricsRow(jetlag: jetlag)
+                                .padding(.horizontal, 20)
+                                .padding(.bottom, 24)
                         }
 
-                        // Forecast card
+                        // Section: Circadian status
+                        sectionHeader("Circadian Status")
+                        if let jetlag = vm.jetlagResult {
+                            jetlagCard(jetlag)
+                                .padding(.horizontal, 20)
+                                .padding(.bottom, 16)
+                        }
+
+                        // Section: Today's energy
                         if let forecast = vm.forecast {
-                            Button { showForecast = true } label: {
-                                summaryCard(
-                                    title: "Energy Forecast",
-                                    icon: "bolt.fill",
-                                    accent: Color.zzzyncAccent
-                                ) {
-                                    if forecast.cognitiveClashes.isEmpty {
-                                        Text("No cognitive clashes today.")
-                                            .font(.subheadline)
-                                            .foregroundStyle(Color.zzzyncScoreGood)
-                                    } else {
-                                        Text("\(forecast.cognitiveClashes.count) clash\(forecast.cognitiveClashes.count == 1 ? "" : "es") detected")
-                                            .font(.subheadline)
-                                            .foregroundStyle(Color.zzzyncScoreBad)
-                                    }
-                                }
-                            }
-                            .buttonStyle(.plain)
+                            sectionHeader("Today's Energy")
+                            forecastCard(forecast)
+                                .padding(.horizontal, 20)
+                                .padding(.bottom, 16)
                         }
 
-                        // Recent food logs
+                        // Section: Recent meals
                         if !vm.recentFoodLogs.isEmpty {
-                            summaryCard(
-                                title: "Recent Meals",
-                                icon: "fork.knife",
-                                accent: Color(red: 0.4, green: 0.85, blue: 0.6)
-                            ) {
-                                VStack(alignment: .leading, spacing: 6) {
-                                    ForEach(vm.recentFoodLogs) { log in
-                                        HStack {
-                                            VStack(alignment: .leading) {
-                                                Text(log.description)
-                                                    .font(.caption)
-                                                    .foregroundStyle(.white.opacity(0.85))
-                                                    .lineLimit(1)
-                                                Text(log.timestamp.timeString)
-                                                    .font(.caption2)
-                                                    .foregroundStyle(Color.zzzyncMuted)
-                                            }
-                                            Spacer()
-                                            if let audit = log.auditResult {
-                                                verdictBadge(audit.timingVerdict)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            sectionHeader("Recent Meals")
+                            recentMealsCard
+                                .padding(.horizontal, 20)
+                                .padding(.bottom, 16)
                         }
 
-                        // Error
-                        if let error = vm.error {
-                            InsightBubble(text: error, icon: "exclamationmark.triangle.fill")
-                        }
-
-                        // Loading
+                        // States
                         if vm.isLoading {
                             LoadingCardView(message: "Analyzing with Claude...")
+                                .padding(.horizontal, 20)
+                                .padding(.bottom, 16)
                         }
+                        if let error = vm.error {
+                            InsightBubble(text: error, icon: "exclamationmark.triangle.fill", color: .zzzyncRed)
+                                .padding(.horizontal, 20)
+                        }
+
+                        Spacer(minLength: 32)
                     }
-                    .padding()
                 }
                 .refreshable { await vm.refresh() }
             }
-            .navigationTitle("zzzync")
+            .navigationTitle("Summary")
             .navigationBarTitleDisplayMode(.large)
+            .toolbarBackground(Color.zzzyncBackground, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        Task { await vm.refresh() }
-                    } label: {
+                    Button { Task { await vm.refresh() } } label: {
                         Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 15, weight: .medium))
                             .foregroundStyle(Color.zzzyncPrimary)
                     }
                     .disabled(vm.isLoading)
@@ -116,80 +79,224 @@ struct DashboardView: View {
             }
             .sheet(isPresented: $showForecast) {
                 EnergyForecastView()
+                    .presentationDetents([.large])
+                    .presentationBackground(Color.zzzyncBackground)
             }
         }
         .onAppear {
             vm.loadCachedData()
-            if vm.jetlagResult == nil {
-                Task { await vm.refresh() }
-            }
+            if vm.jetlagResult == nil { Task { await vm.refresh() } }
         }
     }
 
+    // MARK: - Hero
+
     private var heroSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 20) {
             if vm.isLoading && vm.jetlagResult == nil {
-                ProgressView()
-                    .tint(Color.zzzyncPrimary)
-                    .scaleEffect(1.5)
-                    .frame(height: 180)
+                ZStack {
+                    Circle()
+                        .stroke(Color.zzzyncSurface2, lineWidth: 20)
+                        .frame(width: 200, height: 200)
+                    VStack(spacing: 6) {
+                        ProgressView().tint(Color.zzzyncPrimary).scaleEffect(1.2)
+                        Text("Analyzing…")
+                            .font(.caption)
+                            .foregroundStyle(Color.zzzyncMuted)
+                    }
+                }
             } else {
                 SyncScoreRing(score: vm.syncScore)
             }
 
             if let jetlag = vm.jetlagResult {
-                Text(jetlag.jetlagDescription)
-                    .font(.callout)
+                Text(jetlag.chronotypeDrift)
+                    .font(.subheadline)
                     .foregroundStyle(Color.zzzyncMuted)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal)
+                    .padding(.horizontal, 24)
             }
         }
-        .padding(.top, 8)
     }
 
-    @ViewBuilder
-    private func summaryCard<Content: View>(
-        title: String,
-        icon: String,
-        accent: Color,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
-                Image(systemName: icon)
-                    .foregroundStyle(accent)
-                Text(title)
-                    .font(.headline)
+    // MARK: - Quick metrics
+
+    private func metricsRow(jetlag: SocialJetlagResult) -> some View {
+        HStack(spacing: 10) {
+            MetricTile(
+                icon: "moon.fill",
+                iconColor: .zzzyncPrimary,
+                label: "Jetlag",
+                value: String(format: "%.1f", abs(jetlag.jetlagHours)),
+                unit: "hr"
+            )
+            MetricTile(
+                icon: "waveform.path.ecg",
+                iconColor: .zzzyncBlue,
+                label: "HRV",
+                value: {
+                    let b = LocalStore.shared.loadBiometrics().last?.hrvMs
+                    return b.map { String(format: "%.0f", $0) } ?? "--"
+                }(),
+                unit: "ms"
+            )
+            MetricTile(
+                icon: "heart.fill",
+                iconColor: .zzzyncRed,
+                label: "RHR",
+                value: {
+                    let b = LocalStore.shared.loadBiometrics().last?.rhrBpm
+                    return b.map { String(format: "%.0f", $0) } ?? "--"
+                }(),
+                unit: "bpm"
+            )
+        }
+    }
+
+    // MARK: - Section header (Apple Health style)
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.title3)
+            .fontWeight(.bold)
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 20)
+            .padding(.bottom, 10)
+    }
+
+    // MARK: - Jetlag card
+
+    private func jetlagCard(_ jetlag: SocialJetlagResult) -> some View {
+        HStack(spacing: 16) {
+            // Score ring (small)
+            ZStack {
+                Circle()
+                    .stroke(Color.zzzyncSurface2, lineWidth: 6)
+                Circle()
+                    .trim(from: 0, to: Double(jetlag.score) / 100)
+                    .stroke(Color.syncScoreColor(score: jetlag.score),
+                            style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                Text("\(jetlag.score)")
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
             }
-            content()
+            .frame(width: 52, height: 52)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(jetlag.jetlagDescription)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+                Label(
+                    String(format: "%.1fh gap  ·  Body vs Calendar", abs(jetlag.jetlagHours)),
+                    systemImage: "calendar.badge.clock"
+                )
+                .font(.caption)
+                .foregroundStyle(Color.zzzyncMuted)
+            }
+            Spacer()
         }
-        .padding()
+        .padding(16)
         .background(Color.zzzyncSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
-        )
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
-    private func verdictBadge(_ verdict: MetabolicAuditResult.TimingVerdict) -> some View {
-        Text(verdict.label)
-            .font(.caption2)
-            .fontWeight(.semibold)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(verdictColor(verdict).opacity(0.2))
-            .foregroundStyle(verdictColor(verdict))
-            .clipShape(Capsule())
-    }
+    // MARK: - Forecast card
 
-    private func verdictColor(_ v: MetabolicAuditResult.TimingVerdict) -> Color {
-        switch v {
-        case .onClock:   return .zzzyncScoreGood
-        case .borderline: return .zzzyncScoreWarn
-        case .offClock:  return .zzzyncScoreBad
+    private func forecastCard(_ forecast: EnergyForecast) -> some View {
+        Button { showForecast = true } label: {
+            HStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(Color.zzzyncBlue.opacity(0.15))
+                        .frame(width: 52, height: 52)
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(Color.zzzyncBlue)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Energy Forecast")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                    if forecast.cognitiveClashes.isEmpty {
+                        Label("No clashes today", systemImage: "checkmark.circle.fill")
+                            .font(.caption)
+                            .foregroundStyle(Color.zzzyncGreen)
+                    } else {
+                        Label("\(forecast.cognitiveClashes.count) cognitive clash\(forecast.cognitiveClashes.count == 1 ? "" : "es")",
+                              systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption)
+                            .foregroundStyle(Color.zzzyncAccent)
+                    }
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.zzzyncSubtle)
+            }
+            .padding(16)
+            .background(Color.zzzyncSurface)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Recent meals
+
+    private var recentMealsCard: some View {
+        VStack(spacing: 0) {
+            ForEach(Array(vm.recentFoodLogs.enumerated()), id: \.element.id) { idx, log in
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.zzzyncGreen.opacity(0.15))
+                            .frame(width: 36, height: 36)
+                        Image(systemName: "fork.knife")
+                            .font(.system(size: 14))
+                            .foregroundStyle(Color.zzzyncGreen)
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(log.description)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+                        Text(log.timestamp.timeString)
+                            .font(.caption)
+                            .foregroundStyle(Color.zzzyncMuted)
+                    }
+                    Spacer()
+                    if let audit = log.auditResult {
+                        verdictPill(audit.timingVerdict)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+
+                if idx < vm.recentFoodLogs.count - 1 {
+                    Divider()
+                        .background(Color.zzzyncSurface2)
+                        .padding(.leading, 64)
+                }
+            }
+        }
+        .background(Color.zzzyncSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func verdictPill(_ v: MetabolicAuditResult.TimingVerdict) -> some View {
+        let color: Color = v == .onClock ? .zzzyncGreen : v == .borderline ? .zzzyncScoreWarn : .zzzyncRed
+        return Text(v.label)
+            .font(.system(size: 10, weight: .bold))
+            .foregroundStyle(color)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(color.opacity(0.15))
+            .clipShape(Capsule())
     }
 }

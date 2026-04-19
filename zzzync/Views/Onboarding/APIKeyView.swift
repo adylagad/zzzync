@@ -76,13 +76,11 @@ struct APIKeyView: View {
             .padding(.horizontal)
             .padding(.bottom, 40)
         }
-        .onAppear { apiKey = appState.claudeAPIKey }
     }
 
     private func saveAndContinue() async {
         isValidating = true
         validationError = nil
-        appState.claudeAPIKey = apiKey
         onComplete()
         isValidating = false
     }

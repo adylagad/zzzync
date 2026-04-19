@@ -23,75 +23,52 @@ struct JetlagMapView: View {
                 Color.zzzyncBackground.ignoresSafeArea()
 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        // Chart
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("7-Day Midpoint Drift")
-                                .font(.headline)
-                                .foregroundStyle(.white)
-
-                            if chartData.isEmpty {
-                                Text("No sleep data yet. Allow HealthKit access to see your drift.")
-                                    .font(.subheadline)
-                                    .foregroundStyle(Color.zzzyncMuted)
-                                    .frame(height: 200)
-                                    .frame(maxWidth: .infinity)
-                            } else {
-                                SleepMidpointChart(data: chartData)
-                            }
-
-                            HStack(spacing: 16) {
-                                legendItem(color: .zzzyncPrimary, label: "Body Clock (sleep midpoint)")
-                                legendItem(color: .zzzyncAccent, label: "Calendar (first event)")
-                            }
-                        }
-                        .padding()
-                        .background(Color.zzzyncSurface)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-
-                        // Jetlag result
+                    VStack(spacing: 0) {
+                        // Score banner
                         if let result = vm.result {
-                            VStack(alignment: .leading, spacing: 14) {
-                                HStack {
-                                    Text("Social Jetlag")
-                                        .font(.headline)
-                                        .foregroundStyle(.white)
-                                    Spacer()
-                                    ScoreBadge(score: result.score, size: 44)
-                                }
+                            scoreBanner(result)
+                                .padding(.horizontal, 20)
+                                .padding(.top, 4)
+                                .padding(.bottom, 20)
+                        }
 
-                                Text(result.jetlagDescription)
-                                    .font(.title3)
-                                    .fontWeight(.semibold)
-                                    .foregroundStyle(.white)
+                        // Chart section
+                        sectionLabel("7-Day Body Clock Drift")
+                        chartCard
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 20)
 
-                                Divider().background(Color.white.opacity(0.1))
-
-                                Markdown(result.claudeNarrative)
-                                    .markdownTheme(.zzzync)
-                            }
-                            .padding()
-                            .background(Color.zzzyncSurface)
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                        // Narrative
+                        if let result = vm.result {
+                            sectionLabel("Circadian Analysis")
+                            narrativeCard(result)
+                                .padding(.horizontal, 20)
+                                .padding(.bottom, 20)
                         }
 
                         if vm.isLoading {
                             LoadingCardView(message: "Calculating Social Jetlag...")
+                                .padding(.horizontal, 20)
                         }
-
                         if let error = vm.error {
-                            InsightBubble(text: error, icon: "exclamationmark.triangle.fill")
+                            InsightBubble(text: error, icon: "exclamationmark.triangle.fill", color: .zzzyncRed)
+                                .padding(.horizontal, 20)
                         }
+                        Spacer(minLength: 32)
                     }
-                    .padding()
+                    .padding(.top, 8)
                 }
                 .refreshable { await vm.analyze() }
             }
             .navigationTitle("Jetlag Map")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbarBackground(Color.zzzyncBackground, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button { Task { await vm.analyze() } } label: {
-                        Image(systemName: "arrow.clockwise").foregroundStyle(Color.zzzyncPrimary)
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(Color.zzzyncPrimary)
                     }
                     .disabled(vm.isLoading)
                 }
@@ -100,10 +77,115 @@ struct JetlagMapView: View {
         .onAppear { vm.load() }
     }
 
-    private func legendItem(color: Color, label: String) -> some View {
+    // MARK: - Score banner
+
+    private func scoreBanner(_ result: SocialJetlagResult) -> some View {
+        HStack(spacing: 20) {
+            // Big jetlag number
+            VStack(alignment: .leading, spacing: 2) {
+                Text(String(format: "%.1f", abs(result.jetlagHours)))
+                    .font(.system(size: 48, weight: .heavy, design: .rounded))
+                    .foregroundStyle(.white)
+                    .contentTransition(.numericText())
+                Text("hours jetlag")
+                    .font(.caption)
+                    .foregroundStyle(Color.zzzyncMuted)
+                    .tracking(0.5)
+            }
+
+            Spacer()
+
+            // Sync score ring
+            ZStack {
+                Circle()
+                    .stroke(Color.zzzyncSurface2, lineWidth: 7)
+                Circle()
+                    .trim(from: 0, to: Double(result.score) / 100)
+                    .stroke(Color.syncScoreColor(score: result.score),
+                            style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                VStack(spacing: 1) {
+                    Text("\(result.score)")
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                    Text("sync")
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundStyle(Color.zzzyncMuted)
+                        .tracking(1)
+                }
+            }
+            .frame(width: 70, height: 70)
+        }
+        .padding(20)
+        .background(
+            LinearGradient(
+                colors: [Color.zzzyncPrimary.opacity(0.18), Color.zzzyncSurface],
+                startPoint: .topLeading, endPoint: .bottomTrailing
+            )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    // MARK: - Chart card
+
+    private var chartCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            if chartData.isEmpty {
+                HStack {
+                    Spacer()
+                    VStack(spacing: 8) {
+                        Image(systemName: "moon.zzz").font(.system(size: 32)).foregroundStyle(Color.zzzyncMuted)
+                        Text("No sleep data yet").font(.subheadline).foregroundStyle(Color.zzzyncMuted)
+                    }
+                    .frame(height: 180)
+                    Spacer()
+                }
+            } else {
+                SleepMidpointChart(data: chartData)
+            }
+
+            // Legend
+            HStack(spacing: 20) {
+                legendDot(color: .zzzyncPrimary, label: "Body Clock")
+                legendDot(color: .zzzyncAccent, label: "First Event")
+                Spacer()
+            }
+        }
+        .padding(16)
+        .background(Color.zzzyncSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func narrativeCard(_ result: SocialJetlagResult) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "brain.head.profile")
+                    .foregroundStyle(Color.zzzyncPrimary)
+                Text("Claude's Analysis")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.white)
+            }
+            Divider().background(Color.zzzyncSurface2)
+            Markdown(result.claudeNarrative)
+                .markdownTheme(.zzzync)
+        }
+        .padding(16)
+        .background(Color.zzzyncSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func sectionLabel(_ text: String) -> some View {
+        Text(text)
+            .font(.title3).fontWeight(.bold).foregroundStyle(.white)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 20).padding(.bottom, 10)
+    }
+
+    private func legendDot(color: Color, label: String) -> some View {
         HStack(spacing: 6) {
             Circle().fill(color).frame(width: 8, height: 8)
-            Text(label).font(.caption2).foregroundStyle(Color.zzzyncMuted)
+            Text(label).font(.caption).foregroundStyle(Color.zzzyncMuted)
         }
     }
 }
@@ -113,8 +195,8 @@ struct JetlagMapView: View {
 extension Theme {
     static let zzzync = Theme()
         .text {
-            ForegroundColor(.white.opacity(0.85))
-            FontSize(15)
+            ForegroundColor(Color(white: 0.82))
+            FontSize(14)
         }
         .strong {
             ForegroundColor(.white)

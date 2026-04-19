@@ -26,5 +26,7 @@ struct ContentView: View {
                 }
         }
         .tint(Color.zzzyncPrimary)
+        .toolbarBackground(Color.zzzyncBackground.opacity(0.95), for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
     }
 }

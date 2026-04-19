@@ -1,17 +1,25 @@
 import SwiftUI
 
 extension Color {
-    // Brand palette — deep indigo night sky meets soft amber dawn
-    static let zzzyncPrimary      = Color(red: 0.40, green: 0.32, blue: 0.86)   // indigo
-    static let zzzyncAccent       = Color(red: 1.00, green: 0.72, blue: 0.30)   // amber
-    static let zzzyncBackground   = Color(red: 0.06, green: 0.06, blue: 0.14)   // near-black
-    static let zzzyncSurface      = Color(red: 0.11, green: 0.11, blue: 0.22)   // dark card
-    static let zzzyncMuted        = Color(red: 0.55, green: 0.55, blue: 0.70)   // soft gray
+    // Backgrounds — true black like Apple Health dark mode
+    static let zzzyncBackground  = Color.black
+    static let zzzyncSurface     = Color(red: 0.11, green: 0.11, blue: 0.12)   // #1C1C1E
+    static let zzzyncSurface2    = Color(red: 0.17, green: 0.17, blue: 0.18)   // #2C2C2E
+    static let zzzyncMuted       = Color(white: 0.50)
+    static let zzzyncSubtle      = Color(white: 0.30)
 
-    // Score colors
-    static let zzzyncScoreGood    = Color(red: 0.25, green: 0.85, blue: 0.55)   // green
-    static let zzzyncScoreWarn    = Color(red: 1.00, green: 0.80, blue: 0.20)   // yellow
-    static let zzzyncScoreBad     = Color(red: 0.95, green: 0.35, blue: 0.35)   // red
+    // Accent palette — each maps to a health domain like Apple Health rings
+    static let zzzyncPrimary     = Color(red: 0.53, green: 0.44, blue: 0.93)   // sleep purple
+    static let zzzyncBlue        = Color(red: 0.20, green: 0.67, blue: 1.00)   // HRV / energy blue
+    static let zzzyncGreen       = Color(red: 0.24, green: 0.93, blue: 0.45)   // metabolic green
+    static let zzzyncAccent      = Color(red: 1.00, green: 0.62, blue: 0.00)   // protocol amber
+    static let zzzyncRed         = Color(red: 1.00, green: 0.27, blue: 0.23)   // warning red
+    static let zzzyncTeal        = Color(red: 0.18, green: 0.83, blue: 0.78)   // recovery teal
+
+    // Score → color mapping
+    static let zzzyncScoreGood   = Color(red: 0.24, green: 0.93, blue: 0.45)
+    static let zzzyncScoreWarn   = Color(red: 1.00, green: 0.80, blue: 0.20)
+    static let zzzyncScoreBad    = Color(red: 1.00, green: 0.27, blue: 0.23)
 
     static func syncScoreColor(score: Int) -> Color {
         switch score {

@@ -10,35 +10,21 @@ struct BioProtocolView: View {
                 Color.zzzyncBackground.ignoresSafeArea()
 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
+                    VStack(spacing: 0) {
                         if let proto = vm.bioProtocol {
-                            // Key windows summary
-                            keyWindowsCard(proto)
+                            // Windows banner
+                            windowsBanner(proto)
+                                .padding(.horizontal, 20).padding(.top, 4).padding(.bottom, 20)
 
                             // Timeline
-                            VStack(alignment: .leading, spacing: 0) {
-                                Text("Today's Protocol")
-                                    .font(.headline)
-                                    .foregroundStyle(.white)
-                                    .padding(.bottom, 16)
+                            sectionLabel("Today's Schedule")
+                            timelineCard(proto)
+                                .padding(.horizontal, 20).padding(.bottom, 20)
 
-                                ForEach(Array(proto.protocolItems.enumerated()), id: \.element.id) { index, item in
-                                    ProtocolTimelineRow(
-                                        item: item,
-                                        isLast: index == proto.protocolItems.count - 1
-                                    )
-                                }
-                            }
-                            .padding()
-                            .background(Color.zzzyncSurface)
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
-
-                            // Claude narrative
-                            Markdown(proto.claudeNarrative)
-                                .markdownTheme(.zzzync)
-                                .padding()
-                                .background(Color.zzzyncSurface)
-                                .clipShape(RoundedRectangle(cornerRadius: 16))
+                            // Narrative
+                            sectionLabel("Claude's Rationale")
+                            narrativeCard(proto.claudeNarrative)
+                                .padding(.horizontal, 20).padding(.bottom, 20)
 
                         } else if !vm.isLoading {
                             emptyState
@@ -46,21 +32,27 @@ struct BioProtocolView: View {
 
                         if vm.isLoading {
                             LoadingCardView(message: "Building your Bio-Protocol with Claude...")
+                                .padding(.horizontal, 20)
                         }
-
                         if let error = vm.error {
-                            InsightBubble(text: error, icon: "exclamationmark.triangle.fill")
+                            InsightBubble(text: error, icon: "exclamationmark.triangle.fill", color: .zzzyncRed)
+                                .padding(.horizontal, 20)
                         }
+                        Spacer(minLength: 32)
                     }
-                    .padding()
+                    .padding(.top, 8)
                 }
                 .refreshable { await vm.generate() }
             }
             .navigationTitle("Bio-Protocol")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbarBackground(Color.zzzyncBackground, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button { Task { await vm.generate() } } label: {
-                        Image(systemName: "arrow.clockwise").foregroundStyle(Color.zzzyncPrimary)
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(Color.zzzyncPrimary)
                     }
                     .disabled(vm.isLoading)
                 }
@@ -68,81 +60,120 @@ struct BioProtocolView: View {
         }
         .onAppear {
             vm.load()
-            if vm.bioProtocol == nil {
-                Task { await vm.generate() }
-            }
+            if vm.bioProtocol == nil { Task { await vm.generate() } }
         }
     }
 
-    private func keyWindowsCard(_ proto: BioProtocol) -> some View {
-        VStack(spacing: 12) {
+    // MARK: - Windows banner
+
+    private func windowsBanner(_ proto: BioProtocol) -> some View {
+        VStack(spacing: 14) {
             Text("Optimal Windows")
-                .font(.headline)
-                .foregroundStyle(.white)
+                .font(.footnote).fontWeight(.semibold)
+                .foregroundStyle(Color.zzzyncMuted)
+                .tracking(0.8).textCase(.uppercase)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            HStack(spacing: 12) {
-                windowPill(
+            HStack(spacing: 10) {
+                windowChip(
                     icon: "cup.and.saucer.fill",
                     label: "Caffeine",
                     time: proto.caffeineWindowStart.timeString,
-                    color: Color(red: 0.9, green: 0.6, blue: 0.2)
+                    color: .zzzyncAccent
                 )
-                windowPill(
+                windowChip(
                     icon: "brain.head.profile",
                     label: "Peak Brain",
-                    time: "\(proto.peakBrainWindowStart.timeString)–\(proto.peakBrainWindowEnd.timeString)",
-                    color: Color.zzzyncPrimary
+                    time: proto.peakBrainWindowStart.timeString,
+                    color: .zzzyncPrimary
                 )
-                windowPill(
-                    icon: "sunset.fill",
-                    label: "Eat Before",
+                windowChip(
+                    icon: "moon.fill",
+                    label: "Last Meal",
                     time: proto.digestiveSunset.timeString,
-                    color: Color.zzzyncAccent
+                    color: .zzzyncTeal
                 )
             }
         }
-        .padding()
+        .padding(16)
         .background(Color.zzzyncSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
-    private func windowPill(icon: String, label: String, time: String, color: Color) -> some View {
-        VStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.system(size: 20))
-                .foregroundStyle(color)
+    private func windowChip(icon: String, label: String, time: String, color: Color) -> some View {
+        VStack(spacing: 7) {
+            ZStack {
+                Circle().fill(color.opacity(0.15)).frame(width: 40, height: 40)
+                Image(systemName: icon).font(.system(size: 16)).foregroundStyle(color)
+            }
             Text(label)
-                .font(.caption2)
-                .foregroundStyle(Color.zzzyncMuted)
-                .textCase(.uppercase)
-                .tracking(0.5)
+                .font(.system(size: 9, weight: .semibold)).foregroundStyle(Color.zzzyncMuted)
+                .tracking(0.5).textCase(.uppercase)
             Text(time)
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundStyle(.white)
+                .font(.system(size: 13, weight: .bold, design: .rounded)).foregroundStyle(.white)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(color.opacity(0.08))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(.vertical, 10)
+        .background(color.opacity(0.07))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
+    // MARK: - Timeline
+
+    private func timelineCard(_ proto: BioProtocol) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(proto.protocolItems.enumerated()), id: \.element.id) { idx, item in
+                ProtocolTimelineRow(item: item, isLast: idx == proto.protocolItems.count - 1)
+            }
+        }
+        .padding(16)
+        .background(Color.zzzyncSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    // MARK: - Narrative
+
+    private func narrativeCard(_ narrative: String) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "sparkles").foregroundStyle(Color.zzzyncPrimary)
+                Text("Claude's Analysis")
+                    .font(.subheadline).fontWeight(.semibold).foregroundStyle(.white)
+            }
+            Divider().background(Color.zzzyncSurface2)
+            Markdown(narrative).markdownTheme(.zzzync)
+        }
+        .padding(16)
+        .background(Color.zzzyncSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func sectionLabel(_ text: String) -> some View {
+        Text(text)
+            .font(.title3).fontWeight(.bold).foregroundStyle(.white)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 20).padding(.bottom, 10)
+    }
+
+    // MARK: - Empty
+
     private var emptyState: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "clock.badge.checkmark")
-                .font(.system(size: 60))
-                .foregroundStyle(Color.zzzyncMuted)
-            Text("No Bio-Protocol yet")
-                .font(.title3)
-                .fontWeight(.semibold)
-                .foregroundStyle(.white)
-            Text("Run the Social Jetlag analysis first, then pull to generate your optimized 24-hour protocol.")
-                .font(.subheadline)
-                .foregroundStyle(Color.zzzyncMuted)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
+        VStack(spacing: 20) {
+            Spacer()
+            ZStack {
+                Circle().fill(Color.zzzyncPrimary.opacity(0.10)).frame(width: 90, height: 90)
+                Image(systemName: "clock.badge.checkmark.fill")
+                    .font(.system(size: 40)).foregroundStyle(Color.zzzyncPrimary)
+            }
+            VStack(spacing: 8) {
+                Text("No Protocol yet")
+                    .font(.title3).fontWeight(.bold).foregroundStyle(.white)
+                Text("Complete the Jetlag analysis first, then pull down to generate your optimized 24-hour protocol.")
+                    .font(.subheadline).foregroundStyle(Color.zzzyncMuted)
+                    .multilineTextAlignment(.center).padding(.horizontal, 40)
+            }
+            Spacer()
         }
         .padding(.top, 60)
     }

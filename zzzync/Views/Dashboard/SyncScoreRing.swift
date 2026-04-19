@@ -2,52 +2,75 @@ import SwiftUI
 
 struct SyncScoreRing: View {
     let score: Int
-    var size: CGFloat = 180
+    var size: CGFloat = 200
     @State private var animatedProgress: Double = 0
 
-    private var progress: Double { Double(score) / 100.0 }
-    private var scoreColor: Color { Color.syncScoreColor(score: score) }
+    private var progress: Double  { Double(score) / 100.0 }
+    private var scoreColor: Color { .syncScoreColor(score: score) }
+    private var ringWidth: CGFloat { size * 0.10 }
 
     var body: some View {
         ZStack {
-            // Track
+            // Outer glow
             Circle()
-                .stroke(Color.zzzyncSurface, lineWidth: size * 0.12)
+                .trim(from: 0, to: animatedProgress)
+                .stroke(scoreColor.opacity(0.15), style: StrokeStyle(lineWidth: ringWidth + 12, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .blur(radius: 8)
 
-            // Progress arc
+            // Track ring
+            Circle()
+                .stroke(Color.zzzyncSurface2, style: StrokeStyle(lineWidth: ringWidth, lineCap: .round))
+
+            // Progress ring
             Circle()
                 .trim(from: 0, to: animatedProgress)
                 .stroke(
                     AngularGradient(
-                        colors: [scoreColor.opacity(0.6), scoreColor],
+                        stops: [
+                            .init(color: scoreColor.opacity(0.5), location: 0),
+                            .init(color: scoreColor,              location: 0.6),
+                            .init(color: scoreColor.opacity(0.9), location: 1),
+                        ],
                         center: .center,
                         startAngle: .degrees(-90),
                         endAngle: .degrees(270)
                     ),
-                    style: StrokeStyle(lineWidth: size * 0.12, lineCap: .round)
+                    style: StrokeStyle(lineWidth: ringWidth, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
+                .shadow(color: scoreColor.opacity(0.5), radius: 8, x: 0, y: 0)
 
-            // Center content
-            VStack(spacing: 4) {
+            // Tip dot
+            if animatedProgress > 0.02 {
+                Circle()
+                    .fill(scoreColor)
+                    .frame(width: ringWidth * 0.85, height: ringWidth * 0.85)
+                    .shadow(color: scoreColor, radius: 4)
+                    .offset(y: -(size / 2))
+                    .rotationEffect(.degrees(-90 + animatedProgress * 360))
+            }
+
+            // Center text
+            VStack(spacing: 2) {
                 Text("\(score)")
-                    .font(.system(size: size * 0.32, weight: .bold, design: .rounded))
+                    .font(.system(size: size * 0.28, weight: .heavy, design: .rounded))
                     .foregroundStyle(.white)
-                Text("Sync Score")
-                    .font(.system(size: size * 0.1, weight: .medium))
+                    .contentTransition(.numericText())
+                Text("SYNC")
+                    .font(.system(size: size * 0.085, weight: .bold))
                     .foregroundStyle(Color.zzzyncMuted)
-                    .textCase(.uppercase)
-                    .tracking(1)
+                    .tracking(2.5)
             }
         }
         .frame(width: size, height: size)
         .onAppear {
-            withAnimation(.spring(duration: 1.2, bounce: 0.2)) {
+            withAnimation(.spring(duration: 1.4, bounce: 0.15).delay(0.1)) {
                 animatedProgress = progress
             }
         }
         .onChange(of: score) { _, _ in
-            withAnimation(.spring(duration: 0.8)) {
+            withAnimation(.spring(duration: 0.9)) {
                 animatedProgress = progress
             }
         }
@@ -56,11 +79,13 @@ struct SyncScoreRing: View {
 
 #Preview {
     ZStack {
-        Color.zzzyncBackground.ignoresSafeArea()
-        VStack(spacing: 30) {
-            SyncScoreRing(score: 72)
-            SyncScoreRing(score: 45, size: 120)
-            SyncScoreRing(score: 20, size: 100)
+        Color.black.ignoresSafeArea()
+        VStack(spacing: 40) {
+            SyncScoreRing(score: 78)
+            HStack(spacing: 30) {
+                SyncScoreRing(score: 45, size: 110)
+                SyncScoreRing(score: 22, size: 110)
+            }
         }
     }
 }
