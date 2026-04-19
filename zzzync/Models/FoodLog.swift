@@ -11,11 +11,13 @@ struct FoodLog: Codable, Identifiable {
         id: UUID = UUID(),
         timestamp: Date = Date(),
         description: String,
-        imageData: Data? = nil
+        imageData: Data? = nil,
+        auditResult: MetabolicAuditResult? = nil
     ) {
         self.id = id
         self.timestamp = timestamp
         self.description = description
         self.imageData = imageData
+        self.auditResult = auditResult
     }
 }
