@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AICausalView: View {
     @State private var vm = AICausalViewModel()
+    @FocusState private var isInputFocused: Bool
 
     private let quickPrompts = [
         "Why am I tired?",
@@ -47,6 +48,7 @@ struct AICausalView: View {
                             .padding(.top, 12)
                             .padding(.bottom, 16)
                         }
+                        .scrollDismissesKeyboard(.interactively)
                         .onChange(of: vm.messages.count) {
                             if let last = vm.messages.last {
                                 withAnimation(.easeOut(duration: 0.2)) {
@@ -61,12 +63,19 @@ struct AICausalView: View {
                                 }
                             }
                         }
+                        .onTapGesture { dismissKeyboard() }
                     }
                 }
             }
             .navigationTitle("AI Coach")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color.zzzyncBackground, for: .navigationBar)
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { dismissKeyboard() }
+                }
+            }
             .safeAreaInset(edge: .bottom) { composerBar }
         }
         .onAppear { vm.load() }
@@ -99,6 +108,7 @@ struct AICausalView: View {
             HStack(spacing: 8) {
                 ForEach(quickPrompts, id: \.self) { prompt in
                     Button {
+                        dismissKeyboard()
                         Task { await vm.sendQuickPrompt(prompt) }
                     } label: {
                         Text(prompt)
@@ -173,12 +183,19 @@ struct AICausalView: View {
             TextField("Ask anything...", text: $vm.inputText, axis: .vertical)
                 .lineLimit(1...4)
                 .textInputAutocapitalization(.sentences)
+                .submitLabel(.send)
+                .focused($isInputFocused)
+                .onSubmit {
+                    dismissKeyboard()
+                    Task { await vm.send() }
+                }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
                 .background(Color.zzzyncSurface2)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
             Button {
+                dismissKeyboard()
                 Task { await vm.send() }
             } label: {
                 Image(systemName: "arrow.up")
@@ -194,5 +211,9 @@ struct AICausalView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .background(Color.zzzyncSurface)
+    }
+
+    private func dismissKeyboard() {
+        isInputFocused = false
     }
 }
