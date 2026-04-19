@@ -26,6 +26,9 @@ final class HealthKitService {
     // MARK: - Sleep
 
     func fetchSleepRecords(days: Int = Constants.sleepLookbackDays) async throws -> [SleepRecord] {
+        if HackathonDemoScenario.isEnabled {
+            return Array(HackathonDemoScenario.sleepRecords.suffix(days))
+        }
         guard HKHealthStore.isHealthDataAvailable() else { return mockSleepRecords(days: days) }
 
         let start = Calendar.current.date(byAdding: .day, value: -days, to: Date())!
@@ -53,6 +56,9 @@ final class HealthKitService {
     // MARK: - Biometrics
 
     func fetchBiometrics(days: Int = Constants.biometricLookbackDays) async throws -> [BiometricRecord] {
+        if HackathonDemoScenario.isEnabled {
+            return Array(HackathonDemoScenario.biometrics.suffix(days))
+        }
         guard HKHealthStore.isHealthDataAvailable() else { return mockBiometrics(days: days) }
 
         async let hrv = fetchDailyAverages(quantityType: .heartRateVariabilitySDNN, unit: HKUnit.secondUnit(with: .milli), days: days)

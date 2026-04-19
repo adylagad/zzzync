@@ -1,2 +1,5 @@
 [functions.claude-proxy]
 verify_jwt = true
+
+[functions.email-stress-sync]
+verify_jwt = true

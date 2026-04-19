@@ -17,6 +17,16 @@ final class AppState {
     /// Called once at app launch. Signs in anonymously so every device gets a user_id
     /// without requiring the user to create an account.
     func authenticateSupabase() async {
+        if HackathonDemoScenario.isEnabled {
+            HackathonDemoScenario.installFixedDataIfNeeded(force: false)
+            await MainActor.run {
+                isAuthenticatedWithSupabase = false
+                accountProfile = .signedOut
+                accountActionError = nil
+            }
+            return
+        }
+
         do {
             try await SupabaseService.shared.signInAnonymously()
             await LocalStore.shared.syncFromCloud()

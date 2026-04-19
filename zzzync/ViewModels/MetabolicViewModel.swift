@@ -8,6 +8,9 @@ final class MetabolicViewModel {
     var error: String?
 
     func load() {
+        if HackathonDemoScenario.isEnabled {
+            HackathonDemoScenario.installFixedDataIfNeeded(force: false)
+        }
         foodLogs = LocalStore.shared.loadFoodLogs().reversed()
     }
 

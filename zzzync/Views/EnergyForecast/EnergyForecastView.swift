@@ -34,6 +34,12 @@ struct EnergyForecastView: View {
                                     .padding(.horizontal, 20).padding(.bottom, 20)
                             }
 
+                            if !vm.emailStressSignals.isEmpty {
+                                sectionLabel("Email Pressure")
+                                emailSignalsCard(vm.emailStressSignals)
+                                    .padding(.horizontal, 20).padding(.bottom, 20)
+                            }
+
                             // Claude narrative
                             sectionLabel("Insight")
                             narrativeCard(forecast.claudeNarrative)
@@ -197,6 +203,52 @@ struct EnergyForecastView: View {
     }
 
     // MARK: - Narrative
+
+    private func emailSignalsCard(_ signals: [EmailStressSignal]) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(signals.prefix(4).enumerated()), id: \.element.id) { index, signal in
+                emailSignalRow(signal)
+                if index < min(signals.count, 4) - 1 {
+                    Divider().background(Color.zzzyncSurface2).padding(.leading, 44)
+                }
+            }
+        }
+        .padding(16)
+        .background(Color.zzzyncSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func emailSignalRow(_ signal: EmailStressSignal) -> some View {
+        let color: Color = signal.senderPriority == .high ? .zzzyncRed : .zzzyncAccent
+        let keyword = signal.subjectKeywords.first?.capitalized ?? "General"
+        return HStack(alignment: .top, spacing: 12) {
+            ZStack {
+                Circle().fill(color.opacity(0.15)).frame(width: 32, height: 32)
+                Image(systemName: "envelope.badge.fill")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(color)
+            }
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(signal.senderEmail)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+
+                Text("\(signal.unreadThreads) unread · \(keyword)")
+                    .font(.caption)
+                    .foregroundStyle(Color.zzzyncMuted)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            Text("\(signal.stressScore)")
+                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .foregroundStyle(color)
+        }
+        .padding(.vertical, 10)
+    }
 
     private func narrativeCard(_ narrative: String) -> some View {
         VStack(alignment: .leading, spacing: 10) {

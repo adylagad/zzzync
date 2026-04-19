@@ -14,6 +14,7 @@ struct SettingsView: View {
                 VStack(spacing: 14) {
                     accountCard
                     actionCard
+                    emailCard
                     Spacer()
                 }
                 .padding(16)
@@ -109,6 +110,33 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(Color.zzzyncRed)
             }
+        }
+        .padding(16)
+        .background(Color.zzzyncSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private var emailCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Email Intelligence")
+                .font(.headline)
+                .foregroundStyle(.white)
+
+            NavigationLink {
+                ContactTagsView()
+            } label: {
+                HStack {
+                    Label("Smart Sender Tags", systemImage: "person.2.badge.gearshape")
+                        .foregroundStyle(.white)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(Color.zzzyncMuted)
+                }
+                .padding(12)
+                .background(Color.zzzyncSurface2)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            }
+            .buttonStyle(.plain)
         }
         .padding(16)
         .background(Color.zzzyncSurface)

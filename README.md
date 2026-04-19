@@ -49,6 +49,7 @@ Most fatigue isn't from lack of sleep — it's from *mistimed* sleep. zzzync mea
 - Xcode 15+
 - iOS 17+ device (HealthKit requires a real device, not Simulator)
 - An [Anthropic API key](https://console.anthropic.com)
+- [Supabase CLI](https://supabase.com/docs/guides/cli) (`brew install supabase/tap/supabase`)
 - [xcodegen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`)
 
 ### 1. Clone
@@ -58,19 +59,17 @@ git clone https://github.com/adylagad/zzzync.git
 cd zzzync
 ```
 
-### 2. Add your API key
+### 2. Configure Claude proxy secret (server-side)
 
 ```bash
-cp Config.xcconfig.example Config.xcconfig
+supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-Open `Config.xcconfig` and set your key:
+Deploy the edge function:
 
+```bash
+supabase functions deploy claude-proxy
 ```
-CLAUDE_API_KEY = sk-ant-api03-...
-```
-
-`Config.xcconfig` is gitignored — your key never touches source control.
 
 ### 3. Generate the Xcode project
 

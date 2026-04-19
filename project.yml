@@ -19,6 +19,9 @@ targets:
     type: application
     platform: iOS
     deploymentTarget: "17.0"
+    configFiles:
+      Debug: Config.xcconfig
+      Release: Config.xcconfig
     sources:
       - path: zzzync
         excludes:
@@ -39,6 +42,7 @@ targets:
         NSCalendarsUsageDescription: "zzzync reads your calendar to identify schedule-biology conflicts."
         NSCameraUsageDescription: "zzzync uses your camera to log food for metabolic timing analysis."
         NSPhotoLibraryUsageDescription: "zzzync reads photos to log food for metabolic timing analysis."
+        CLAUDE_API_KEY: "$(CLAUDE_API_KEY)"
     entitlements:
       path: zzzync/zzzync.entitlements
       properties:

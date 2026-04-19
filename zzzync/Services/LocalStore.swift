@@ -9,6 +9,8 @@ final class LocalStore {
     private let decoder = JSONDecoder()
     private let syncMetadataKey = "syncMetadata"
     private let pendingSyncTasksKey = "pendingCloudSyncTasks"
+    private let contactTagsKey = "contactTags"
+    private let emailStressSignalsKey = "emailStressSignals"
     private let syncLock = NSLock()
     private var isFlushingPendingTasks = false
 
@@ -134,6 +136,24 @@ final class LocalStore {
 
     func loadEnergyForecast() -> EnergyForecast? {
         load(key: "energyForecast")
+    }
+
+    // MARK: - Email Intelligence cache
+
+    func saveContactTags(_ tags: [ContactTag]) {
+        save(tags, key: contactTagsKey)
+    }
+
+    func loadContactTags() -> [ContactTag] {
+        load(key: contactTagsKey) ?? []
+    }
+
+    func saveEmailStressSignals(_ signals: [EmailStressSignal]) {
+        save(signals, key: emailStressSignalsKey)
+    }
+
+    func loadEmailStressSignals() -> [EmailStressSignal] {
+        load(key: emailStressSignalsKey) ?? []
     }
 
     // MARK: - Cloud Sync
@@ -365,6 +385,8 @@ final class LocalStore {
             "jetlagResult",
             "energyForecast",
             "bioProtocol",
+            contactTagsKey,
+            emailStressSignalsKey,
             syncMetadataKey,
             pendingSyncTasksKey
         ]

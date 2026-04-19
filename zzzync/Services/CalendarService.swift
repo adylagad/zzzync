@@ -25,18 +25,27 @@ final class CalendarService {
     // MARK: - Events
 
     func fetchTodayEvents() -> [CalendarEvent] {
+        if HackathonDemoScenario.isEnabled {
+            return HackathonDemoScenario.todayEvents
+        }
         let today = Calendar.current.startOfDay(for: Date())
         let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today)!
         return fetchEvents(from: today, to: tomorrow)
     }
 
     func fetchEvents(days: Int) -> [CalendarEvent] {
+        if HackathonDemoScenario.isEnabled {
+            return HackathonDemoScenario.allCalendarEvents
+        }
         let start = Calendar.current.startOfDay(for: Date())
         let end = Calendar.current.date(byAdding: .day, value: days, to: start)!
         return fetchEvents(from: start, to: end)
     }
 
     func fetchFirstEventsThisWeek() -> [CalendarEvent] {
+        if HackathonDemoScenario.isEnabled {
+            return HackathonDemoScenario.firstEventsThisWeek
+        }
         // Returns the first event of each day for the past 7 days (for jetlag calculation)
         var result: [CalendarEvent] = []
         for dayOffset in -7...0 {

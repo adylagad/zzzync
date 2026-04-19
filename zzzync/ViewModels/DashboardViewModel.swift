@@ -12,12 +12,27 @@ final class DashboardViewModel {
     var syncScore: Int { jetlagResult?.score ?? 0 }
 
     func loadCachedData() {
+        if HackathonDemoScenario.isEnabled {
+            HackathonDemoScenario.installFixedDataIfNeeded(force: false)
+        }
         jetlagResult = LocalStore.shared.loadSocialJetlagResult()
         forecast = LocalStore.shared.loadEnergyForecast()
         recentFoodLogs = Array(LocalStore.shared.loadFoodLogs().suffix(3))
     }
 
     func refresh() async {
+        if HackathonDemoScenario.isEnabled {
+            HackathonDemoScenario.installFixedDataIfNeeded(force: true)
+            await MainActor.run {
+                self.jetlagResult = LocalStore.shared.loadSocialJetlagResult()
+                self.forecast = LocalStore.shared.loadEnergyForecast()
+                self.recentFoodLogs = Array(LocalStore.shared.loadFoodLogs().suffix(3))
+                self.error = nil
+                self.isLoading = false
+            }
+            return
+        }
+
         await MainActor.run { isLoading = true; error = nil }
 
         do {

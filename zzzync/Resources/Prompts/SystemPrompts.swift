@@ -56,7 +56,7 @@ enum SystemPrompts {
           "suggestion": <string, short action phrase (max 8 words)>
         }
       ],
-      "claude_narrative": <string, one concise sentence (max 14 words)>
+      "claude_narrative": <string, one concise sentence (max 14 words), include email pressure if relevant>
     }
     """
 

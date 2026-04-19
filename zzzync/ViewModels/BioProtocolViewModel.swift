@@ -8,10 +8,23 @@ final class BioProtocolViewModel {
     var error: String?
 
     func load() {
+        if HackathonDemoScenario.isEnabled {
+            HackathonDemoScenario.installFixedDataIfNeeded(force: false)
+        }
         bioProtocol = LocalStore.shared.loadBioProtocol()
     }
 
     func generate() async {
+        if HackathonDemoScenario.isEnabled {
+            HackathonDemoScenario.installFixedDataIfNeeded(force: true)
+            await MainActor.run {
+                self.bioProtocol = LocalStore.shared.loadBioProtocol()
+                self.error = nil
+                self.isLoading = false
+            }
+            return
+        }
+
         await MainActor.run { isLoading = true; error = nil }
         do {
             guard let jetlagResult = LocalStore.shared.loadSocialJetlagResult() else {

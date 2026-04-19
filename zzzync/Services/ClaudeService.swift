@@ -4,17 +4,7 @@ import UIKit
 final class ClaudeService {
     static let shared = ClaudeService()
 
-    private var apiKey: String {
-        let raw = (Bundle.main.object(forInfoDictionaryKey: "ClaudeAPIKey") as? String)?
-            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-
-        // Guard against unresolved build setting placeholders.
-        if raw.isEmpty || raw == "$(CLAUDE_API_KEY)" || raw == "sk-ant-your-key-here" {
-            return ""
-        }
-        return raw
-    }
-    private let endpoint = URL(string: Constants.claudeAPIEndpoint)!
+    private let endpoint = URL(string: Constants.claudeEndpoint)!
     private let isoFormatter: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -142,7 +132,8 @@ final class ClaudeService {
     func generateEnergyForecast(
         todayEvents: [CalendarEvent],
         biometrics: [BiometricRecord],
-        sleepLastNight: SleepRecord?
+        sleepLastNight: SleepRecord?,
+        emailStressSignals: [EmailStressSignal] = []
     ) async throws -> EnergyForecast {
         let eventText = todayEvents.map { e in
             "\(e.startDate.timeString)–\(e.endDate.timeString): \(e.title) (stress weight: \(e.stressWeight))"
@@ -154,6 +145,12 @@ final class ClaudeService {
 
         let bioText = biometrics.suffix(3).map { b in
             "\(b.date.shortDateString): HRV \(b.hrvMs.map { String(format: "%.0fms", $0) } ?? "N/A"), RHR \(b.rhrBpm.map { String(format: "%.0fbpm", $0) } ?? "N/A")"
+        }.joined(separator: "\n")
+
+        let emailText = emailStressSignals.prefix(10).map { s in
+            let keywords = s.subjectKeywords.prefix(3).joined(separator: ", ")
+            let keywordPart = keywords.isEmpty ? "none" : keywords
+            return "\(s.provider.label) \(s.senderEmail) [\(s.senderPriority.rawValue)] threads:\(s.unreadThreads) depth:\(s.threadLengthScore) keywords:\(keywordPart) stress:\(s.stressScore)"
         }.joined(separator: "\n")
 
         let prompt = """
@@ -168,9 +165,13 @@ final class ClaudeService {
         RECENT BIOMETRICS:
         \(bioText)
 
+        EMAIL STRESS SIGNALS (flagged senders):
+        \(emailText.isEmpty ? "No flagged unread threads found" : emailText)
+
         Today's date: \(Date().shortDateString)
 
         Identify any Cognitive Clashes (important meetings scheduled during predicted low-energy windows).
+        Increase clash severity when high-stakes unread email pressure is high.
         Respond with JSON matching this schema:
         \(SystemPrompts.energyForecastSchema)
         """
@@ -280,7 +281,10 @@ final class ClaudeService {
     }
 
     private func sendMessage(contentBlocks: [[String: Any]]) async throws -> String {
-        guard !apiKey.isEmpty else { throw ClaudeServiceError.noAPIKey }
+        let apiKey = Constants.claudeAPIKey
+        guard !apiKey.isEmpty else {
+            throw ClaudeServiceError.noAPIKey
+        }
 
         let body: [String: Any] = [
             "model": Constants.claudeModel,
@@ -381,7 +385,7 @@ enum ClaudeServiceError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .noAPIKey:                    return "No Claude API key set. Add it in Settings."
+        case .noAPIKey:                   return "No Claude API key set. Add CLAUDE_API_KEY in Config.xcconfig."
         case .apiError(let msg):           return "API error: \(msg)"
         case .malformedResponse:           return "Claude returned an unexpected response format."
         case .dateParsingFailed(let str):  return "Could not parse date: \(str)"

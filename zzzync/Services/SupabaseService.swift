@@ -160,6 +160,80 @@ final class SupabaseService {
         return rows.map { $0.toModel() }
     }
 
+    // MARK: - Contact Tags (Phase 3)
+
+    func upsertContactTag(email: String, priority: ContactPriority) async throws {
+        guard let userId = await currentUserId else { return }
+        let row = ContactTagRow(
+            id: UUID(),
+            user_id: userId,
+            email: email.lowercased(),
+            priority: priority.rawValue,
+            created_at: nil,
+            updated_at: nil
+        )
+        try await client.from("contact_tags")
+            .upsert(row, onConflict: "user_id,email")
+            .execute()
+    }
+
+    func deleteContactTag(id: UUID) async throws {
+        guard let userId = await currentUserId else { return }
+        try await client.from("contact_tags")
+            .delete()
+            .eq("user_id", value: userId)
+            .eq("id", value: id)
+            .execute()
+    }
+
+    func fetchContactTags() async throws -> [ContactTag] {
+        guard let userId = await currentUserId else { return [] }
+        let rows: [ContactTagRow] = try await client.from("contact_tags")
+            .select()
+            .eq("user_id", value: userId)
+            .order("updated_at", ascending: false)
+            .execute()
+            .value
+        return rows.map { $0.toModel() }
+    }
+
+    // MARK: - Email Stress Signals (Phase 3)
+
+    func syncEmailStressSignals(
+        provider: EmailProvider,
+        accessToken: String,
+        days: Int = 7
+    ) async throws -> [EmailStressSignal] {
+        let payload = EmailSyncRequest(
+            provider: provider.rawValue,
+            access_token: accessToken,
+            days: days
+        )
+        let response: EmailSyncResponse = try await client.functions.invoke(
+            "email-stress-sync",
+            options: .init(method: .post, body: payload)
+        )
+        return response.signals
+            .map { $0.toModel() }
+            .sorted { $0.stressScore > $1.stressScore }
+    }
+
+    func fetchEmailStressSignals(days: Int = 7) async throws -> [EmailStressSignal] {
+        guard let userId = await currentUserId else { return [] }
+        let since = ISO8601DateFormatter().string(
+            from: Calendar.current.date(byAdding: .day, value: -days, to: Date())!
+        )
+        let rows: [EmailStressSignalRow] = try await client.from("email_stress_signals")
+            .select()
+            .eq("user_id", value: userId)
+            .gte("generated_at", value: since)
+            .order("stress_score", ascending: false)
+            .limit(20)
+            .execute()
+            .value
+        return rows.map { $0.toModel() }
+    }
+
     // MARK: - Social Jetlag Results
 
     func upsertJetlagResult(_ result: SocialJetlagResult) async throws {
@@ -594,6 +668,63 @@ struct BioProtocolRow: Codable {
     }
 
     var updatedAtDate: Date? { parseISODate(updated_at) }
+}
+
+struct ContactTagRow: Codable {
+    var id: UUID
+    var user_id: UUID
+    var email: String
+    var priority: String
+    var created_at: String?
+    var updated_at: String?
+
+    func toModel() -> ContactTag {
+        ContactTag(
+            id: id,
+            email: email,
+            priority: ContactPriority(rawValue: priority) ?? .low,
+            createdAt: parseISODate(created_at),
+            updatedAt: parseISODate(updated_at)
+        )
+    }
+}
+
+struct EmailStressSignalRow: Codable {
+    var id: UUID
+    var user_id: UUID
+    var provider: String
+    var sender_email: String
+    var sender_priority: String
+    var unread_threads: Int
+    var thread_length_score: Int
+    var subject_keywords: [String]
+    var stress_score: Int
+    var generated_at: String
+    var updated_at: String?
+
+    func toModel() -> EmailStressSignal {
+        EmailStressSignal(
+            id: id,
+            provider: EmailProvider(rawValue: provider) ?? .gmail,
+            senderEmail: sender_email,
+            senderPriority: ContactPriority(rawValue: sender_priority) ?? .low,
+            unreadThreads: unread_threads,
+            threadLengthScore: thread_length_score,
+            subjectKeywords: subject_keywords,
+            stressScore: stress_score,
+            generatedAt: iso.date(from: generated_at) ?? Date()
+        )
+    }
+}
+
+private struct EmailSyncRequest: Encodable {
+    let provider: String
+    let access_token: String
+    let days: Int
+}
+
+private struct EmailSyncResponse: Decodable {
+    let signals: [EmailStressSignalRow]
 }
 
 // Shared date formatter for DATE columns (no time component)

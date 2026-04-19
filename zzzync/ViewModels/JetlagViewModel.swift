@@ -10,12 +10,27 @@ final class JetlagViewModel {
     var error: String?
 
     func load() {
+        if HackathonDemoScenario.isEnabled {
+            HackathonDemoScenario.installFixedDataIfNeeded(force: false)
+        }
         sleepRecords = LocalStore.shared.loadSleepRecords()
         firstEvents = CalendarService.shared.fetchFirstEventsThisWeek()
         result = LocalStore.shared.loadSocialJetlagResult()
     }
 
     func analyze() async {
+        if HackathonDemoScenario.isEnabled {
+            HackathonDemoScenario.installFixedDataIfNeeded(force: true)
+            await MainActor.run {
+                self.sleepRecords = LocalStore.shared.loadSleepRecords()
+                self.firstEvents = CalendarService.shared.fetchFirstEventsThisWeek()
+                self.result = LocalStore.shared.loadSocialJetlagResult()
+                self.error = nil
+                self.isLoading = false
+            }
+            return
+        }
+
         await MainActor.run { isLoading = true; error = nil }
         do {
             let sleep = try await HealthKitService.shared.fetchSleepRecords()
