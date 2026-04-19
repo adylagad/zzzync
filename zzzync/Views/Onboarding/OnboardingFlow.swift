@@ -122,7 +122,10 @@ private struct WelcomeStep: View {
         HStack(alignment: .center, spacing: 16) {
             ZStack {
                 Circle().fill(color.opacity(0.15)).frame(width: 42, height: 42)
-                Image(systemName: icon).font(.system(size: 17)).foregroundStyle(color)
+                Image(systemName: icon)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(color)
+                    .frame(width: 20, height: 20)
             }
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)

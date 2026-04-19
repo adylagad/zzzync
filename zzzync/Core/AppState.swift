@@ -3,9 +3,8 @@ import Observation
 
 @Observable
 final class AppState {
-    var isOnboardingComplete: Bool {
-        get { UserDefaults.standard.bool(forKey: "onboardingComplete") }
-        set { UserDefaults.standard.set(newValue, forKey: "onboardingComplete") }
+    var isOnboardingComplete: Bool = UserDefaults.standard.bool(forKey: "onboardingComplete") {
+        didSet { UserDefaults.standard.set(isOnboardingComplete, forKey: "onboardingComplete") }
     }
 
     var hasHealthKitPermission = false
