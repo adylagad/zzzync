@@ -18,14 +18,19 @@ enum SystemPrompts {
 
     IMPORTANT: Respond ONLY with valid JSON matching the schema provided in the user message. \
     No markdown fences, no explanation outside the JSON object.
+
+    Keep text concise and glanceable:
+    - Prefer short phrases over paragraphs
+    - Keep most text fields under 12 words unless schema says otherwise
+    - Avoid markdown formatting
     """
 
     static let socialJetlagSchema = """
     {
       "score": <integer 0-100, where 100 = perfect sync>,
       "jetlag_hours": <float, positive = body behind schedule, negative = body ahead>,
-      "chronotype_drift": <string, 1-2 sentence timezone metaphor>,
-      "claude_narrative": <string, 3-5 sentence markdown explanation with **bold** key terms>
+      "chronotype_drift": <string, short timezone metaphor phrase (max 10 words)>,
+      "claude_narrative": <string, one concise sentence (max 14 words)>
     }
     """
 
@@ -34,8 +39,8 @@ enum SystemPrompts {
       "meal_description": <string, Claude-identified meal contents>,
       "timing_verdict": <"on_clock" | "borderline" | "off_clock">,
       "hours_from_digestive_sunset": <float, positive = after sunset, negative = before>,
-      "metabolic_insight": <string, one punchy sentence verdict>,
-      "claude_narrative": <string, 3-5 sentence markdown explanation>
+      "metabolic_insight": <string, one punchy sentence (max 12 words)>,
+      "claude_narrative": <string, one concise sentence (max 14 words)>
     }
     """
 
@@ -48,10 +53,10 @@ enum SystemPrompts {
           "event_start_iso": <ISO8601 datetime string>,
           "predicted_energy_level": <float 0.0-1.0>,
           "severity": <"low" | "medium" | "high">,
-          "suggestion": <string, one actionable sentence>
+          "suggestion": <string, short action phrase (max 8 words)>
         }
       ],
-      "claude_narrative": <string, 3-5 sentence markdown explanation>
+      "claude_narrative": <string, one concise sentence (max 14 words)>
     }
     """
 
@@ -65,11 +70,11 @@ enum SystemPrompts {
         {
           "time_iso": <ISO8601 datetime string>,
           "category": <"caffeine" | "cognitive_work" | "meal" | "rest" | "exercise">,
-          "title": <string>,
-          "rationale": <string, one sentence>
+          "title": <string, short action title (max 6 words)>,
+          "rationale": <string, short why phrase (max 8 words)>
         }
       ],
-      "claude_narrative": <string, 3-5 sentence markdown explanation>
+      "claude_narrative": <string, one concise sentence (max 14 words)>
     }
     """
 }

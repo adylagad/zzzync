@@ -49,7 +49,7 @@ struct ProtocolTimelineRow: View {
                 Text(item.rationale)
                     .font(.caption)
                     .foregroundStyle(Color.zzzyncMuted)
-                    .lineSpacing(3)
+                    .lineLimit(1)
             }
             .padding(.bottom, isLast ? 0 : 16)
         }

@@ -1,9 +1,7 @@
 import SwiftUI
-import MarkdownUI
 
 struct JetlagMapView: View {
     @State private var vm = JetlagViewModel()
-    @State private var showFullNarrative = false
 
     private var chartData: [SleepMidpointChartData] {
         let firstEventByDay = Dictionary(
@@ -168,18 +166,9 @@ struct JetlagMapView: View {
                     .foregroundStyle(.white)
             }
             Divider().background(Color.zzzyncSurface2)
-            Markdown(result.claudeNarrative)
-                .markdownTheme(.zzzync)
-                .lineLimit(showFullNarrative ? nil : 5)
-            if result.claudeNarrative.count > 180 {
-                Button(showFullNarrative ? "Less" : "More") {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        showFullNarrative.toggle()
-                    }
-                }
-                .font(.caption)
-                .foregroundStyle(Color.zzzyncPrimary)
-            }
+            Text(result.claudeNarrative.conciseInsight(maxWords: 14))
+                .font(.subheadline)
+                .foregroundStyle(Color(white: 0.85))
         }
         .padding(16)
         .background(Color.zzzyncSurface)
@@ -199,18 +188,4 @@ struct JetlagMapView: View {
             Text(label).font(.caption).foregroundStyle(Color.zzzyncMuted)
         }
     }
-}
-
-// MARK: - Markdown theme
-
-extension Theme {
-    static let zzzync = Theme()
-        .text {
-            ForegroundColor(Color(white: 0.82))
-            FontSize(14)
-        }
-        .strong {
-            ForegroundColor(.white)
-            FontWeight(.semibold)
-        }
 }

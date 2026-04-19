@@ -1,9 +1,7 @@
 import SwiftUI
-import MarkdownUI
 
 struct BioProtocolView: View {
     @State private var vm = BioProtocolViewModel()
-    @State private var showFullNarrative = false
 
     var body: some View {
         NavigationStack {
@@ -143,18 +141,9 @@ struct BioProtocolView: View {
                     .font(.subheadline).fontWeight(.semibold).foregroundStyle(.white)
             }
             Divider().background(Color.zzzyncSurface2)
-            Markdown(narrative)
-                .markdownTheme(.zzzync)
-                .lineLimit(showFullNarrative ? nil : 5)
-            if narrative.count > 180 {
-                Button(showFullNarrative ? "Less" : "More") {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        showFullNarrative.toggle()
-                    }
-                }
-                .font(.caption)
-                .foregroundStyle(Color.zzzyncPrimary)
-            }
+            Text(narrative.conciseInsight(maxWords: 14))
+                .font(.subheadline)
+                .foregroundStyle(Color(white: 0.85))
         }
         .padding(16)
         .background(Color.zzzyncSurface)

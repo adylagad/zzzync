@@ -1,9 +1,7 @@
 import SwiftUI
-import MarkdownUI
 
 struct EnergyForecastView: View {
     @State private var vm = ForecastViewModel()
-    @State private var showFullNarrative = false
 
     private var energyPoints: [EnergyPoint] {
         guard let forecast = vm.forecast else { return [] }
@@ -191,7 +189,8 @@ struct EnergyForecastView: View {
                         .foregroundStyle(color)
                 }
                 Text(clash.suggestion)
-                    .font(.caption).foregroundStyle(Color.zzzyncMuted).lineSpacing(3)
+                    .font(.caption).foregroundStyle(Color.zzzyncMuted)
+                    .lineLimit(1)
             }
         }
         .padding(.vertical, 10)
@@ -207,18 +206,9 @@ struct EnergyForecastView: View {
                     .font(.subheadline).fontWeight(.semibold).foregroundStyle(.white)
             }
             Divider().background(Color.zzzyncSurface2)
-            Markdown(narrative)
-                .markdownTheme(.zzzync)
-                .lineLimit(showFullNarrative ? nil : 5)
-            if narrative.count > 180 {
-                Button(showFullNarrative ? "Less" : "More") {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        showFullNarrative.toggle()
-                    }
-                }
-                .font(.caption)
-                .foregroundStyle(Color.zzzyncPrimary)
-            }
+            Text(narrative.conciseInsight(maxWords: 14))
+                .font(.subheadline)
+                .foregroundStyle(Color(white: 0.85))
         }
         .padding(16)
         .background(Color.zzzyncSurface)

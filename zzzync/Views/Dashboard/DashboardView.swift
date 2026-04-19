@@ -110,7 +110,7 @@ struct DashboardView: View {
             }
 
             if let jetlag = vm.jetlagResult {
-                Text(jetlag.chronotypeDrift)
+                Text(jetlag.chronotypeDrift.conciseInsight(maxWords: 10))
                     .font(.subheadline)
                     .foregroundStyle(Color.zzzyncMuted)
                     .multilineTextAlignment(.center)

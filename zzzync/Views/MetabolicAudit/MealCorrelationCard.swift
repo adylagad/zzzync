@@ -1,10 +1,8 @@
 import SwiftUI
-import MarkdownUI
 
 struct MealCorrelationCard: View {
     let log: FoodLog
     @State private var isExpanded = false
-    @State private var showFullNarrative = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -68,18 +66,9 @@ struct MealCorrelationCard: View {
                             .font(.caption).foregroundStyle(Color.zzzyncMuted)
                     }
 
-                    Markdown(audit.claudeNarrative)
-                        .markdownTheme(.zzzync)
-                        .lineLimit(showFullNarrative ? nil : 4)
-                    if audit.claudeNarrative.count > 140 {
-                        Button(showFullNarrative ? "Less" : "More") {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                showFullNarrative.toggle()
-                            }
-                        }
+                    Text(audit.claudeNarrative.conciseInsight(maxWords: 12))
                         .font(.caption)
-                        .foregroundStyle(Color.zzzyncPrimary)
-                    }
+                        .foregroundStyle(Color.zzzyncMuted)
                 }
                 .padding(.horizontal, 14)
                 .padding(.bottom, 14)

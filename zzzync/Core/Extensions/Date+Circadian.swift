@@ -50,3 +50,18 @@ extension Array where Element == Date {
         return Date(timeIntervalSinceReferenceDate: total / Double(count))
     }
 }
+
+extension String {
+    /// Returns a compact sentence-like snippet for glanceable UI.
+    func conciseInsight(maxWords: Int) -> String {
+        let cleaned = replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: "  ", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !cleaned.isEmpty else { return "" }
+
+        let words = cleaned.split(whereSeparator: \.isWhitespace)
+        guard words.count > maxWords else { return cleaned }
+        return words.prefix(maxWords).joined(separator: " ") + "…"
+    }
+}
