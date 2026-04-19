@@ -72,7 +72,7 @@ final class HealthKitService {
     // MARK: - Mock data (realistic social jetlag scenario for demo)
 
     /// Simulates a night-owl whose body clock runs ~2h behind their 9 AM calendar.
-    static func mockSleepRecords(days: Int = 7) -> [SleepRecord] {
+    func mockSleepRecords(days: Int = 7) -> [SleepRecord] {
         let cal = Calendar.current
         let today = cal.startOfDay(for: Date())
 
@@ -109,7 +109,7 @@ final class HealthKitService {
         }
     }
 
-    static func mockBiometrics(days: Int = 7) -> [BiometricRecord] {
+    func mockBiometrics(days: Int = 7) -> [BiometricRecord] {
         let cal = Calendar.current
         let today = cal.startOfDay(for: Date())
 
