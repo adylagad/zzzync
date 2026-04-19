@@ -9,11 +9,13 @@
 /* Begin PBXBuildFile section */
 		01233750D61E5D56006F972C /* FoodLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00CBDDFE14F895E97D71081E /* FoodLog.swift */; };
 		026E610A21CDE0173D511B9F /* DashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C34F7B7BA1945D61669A73 /* DashboardViewModel.swift */; };
+		04C3479B9B3F3F59C309625B /* AICausalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14EF246899F62BDCDA17A878 /* AICausalView.swift */; };
 		05735DD15D98082221D7CB27 /* LocalStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7163AC130BB9DE407021D0C8 /* LocalStore.swift */; };
 		064FE7A1D3B565988289C503 /* ProtocolTimelineRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A956D3A469CF9C78D8481C4 /* ProtocolTimelineRow.swift */; };
 		0A6F45913EA2F1664935281A /* CalendarEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3C5672AA6D57E8BE4AC995A /* CalendarEvent.swift */; };
 		0B10F0C90AE38F56106D044E /* ContactTagsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC2BA8453B626CE7D2E534E9 /* ContactTagsViewModel.swift */; };
 		0CD873DFBD82059893CE2D17 /* MealCorrelationCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65E9E0B95DEB02D51087989B /* MealCorrelationCard.swift */; };
+		0FAA1F6375888B7E37C1B913 /* FatigueAnswer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2243D524240A2175992C2A8 /* FatigueAnswer.swift */; };
 		107BDEE838AB5468AAAAFFAF /* MetabolicAuditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 718FF67EA0C8BA1678058539 /* MetabolicAuditView.swift */; };
 		1B03BA4972CF6400058B180E /* ClaudeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2C33DB51BC94191A41C2771 /* ClaudeService.swift */; };
 		20C859A82EB571BAD93D9F37 /* EmailStressSignal.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFD64E381AF4A61D9ACBC5D1 /* EmailStressSignal.swift */; };
@@ -26,6 +28,7 @@
 		3BCD24DD578F10B10035DF11 /* zzzyncApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AD25245613BAE735F5A3C7F /* zzzyncApp.swift */; };
 		3E5D87CFBE56CB2B2258442E /* ContactTag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B2BA6F5AC6F22DAC43610A /* ContactTag.swift */; };
 		4684129D6E647B0C88D25FF7 /* SyncScoreRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB12A11977EAF5459F61EC38 /* SyncScoreRing.swift */; };
+		468D6F7C1FBFD82E1D9C9F19 /* AICausalViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95AB38211B8F75932BCEAAB3 /* AICausalViewModel.swift */; };
 		4E3E3A15C3E119A74F6EB31A /* CalendarDensityChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F4F5630F3BD0C22683542A /* CalendarDensityChart.swift */; };
 		5959AA701A7CA3BCE9053ADF /* EnergyForecast.swift in Sources */ = {isa = PBXBuildFile; fileRef = 091697DEA46B40B85215C970 /* EnergyForecast.swift */; };
 		6328A29B82EF561FE05742B9 /* BioProtocolViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88EE2AB36C54483EF5BC1371 /* BioProtocolViewModel.swift */; };
@@ -63,6 +66,7 @@
 		06AD422BB60894ED31F83F2D /* SystemPrompts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemPrompts.swift; sourceTree = "<group>"; };
 		091697DEA46B40B85215C970 /* EnergyForecast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnergyForecast.swift; sourceTree = "<group>"; };
 		0F368EC758C28200440BA415 /* SleepRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepRecord.swift; sourceTree = "<group>"; };
+		14EF246899F62BDCDA17A878 /* AICausalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AICausalView.swift; sourceTree = "<group>"; };
 		19D6FB4902BC79FD1AEC9D7E /* EnergyForecastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnergyForecastView.swift; sourceTree = "<group>"; };
 		1A956D3A469CF9C78D8481C4 /* ProtocolTimelineRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtocolTimelineRow.swift; sourceTree = "<group>"; };
 		209EC9803B738656E0145BFC /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
@@ -93,11 +97,13 @@
 		85CC40F7741827AC7EBDB245 /* SleepMidpointChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepMidpointChart.swift; sourceTree = "<group>"; };
 		88EE2AB36C54483EF5BC1371 /* BioProtocolViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BioProtocolViewModel.swift; sourceTree = "<group>"; };
 		93C34F7B7BA1945D61669A73 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
+		95AB38211B8F75932BCEAAB3 /* AICausalViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AICausalViewModel.swift; sourceTree = "<group>"; };
 		A7AD19F5C188BFDBC7C5DD09 /* FoodLogService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodLogService.swift; sourceTree = "<group>"; };
 		A9E35EA64439FC727FED6373 /* SupabaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseService.swift; sourceTree = "<group>"; };
 		AC4F65FD66ED6ADF71F05E46 /* BioProtocolView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BioProtocolView.swift; sourceTree = "<group>"; };
 		AFD64E381AF4A61D9ACBC5D1 /* EmailStressSignal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailStressSignal.swift; sourceTree = "<group>"; };
 		B19A2DA3D3ED9FA1F422FE06 /* SocialJetlagResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialJetlagResult.swift; sourceTree = "<group>"; };
+		B2243D524240A2175992C2A8 /* FatigueAnswer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FatigueAnswer.swift; sourceTree = "<group>"; };
 		BB12A11977EAF5459F61EC38 /* SyncScoreRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncScoreRing.swift; sourceTree = "<group>"; };
 		BB256C92CCD8553106EA8AFF /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		BBC7308D76AB16CF801AB352 /* CalendarService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarService.swift; sourceTree = "<group>"; };
@@ -134,6 +140,14 @@
 			path = JetlagMap;
 			sourceTree = "<group>";
 		};
+		1ADF3B2F8D9C5304AC1FFACA /* AI */ = {
+			isa = PBXGroup;
+			children = (
+				14EF246899F62BDCDA17A878 /* AICausalView.swift */,
+			);
+			path = AI;
+			sourceTree = "<group>";
+		};
 		36DA069E6EF9C76FC86A3485 /* Core */ = {
 			isa = PBXGroup;
 			children = (
@@ -155,6 +169,7 @@
 		3D34CCA863825501723091C3 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				95AB38211B8F75932BCEAAB3 /* AICausalViewModel.swift */,
 				88EE2AB36C54483EF5BC1371 /* BioProtocolViewModel.swift */,
 				CC2BA8453B626CE7D2E534E9 /* ContactTagsViewModel.swift */,
 				93C34F7B7BA1945D61669A73 /* DashboardViewModel.swift */,
@@ -207,6 +222,7 @@
 		5A8FEDA570899A92360E370B /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				1ADF3B2F8D9C5304AC1FFACA /* AI */,
 				66BF2284528622A343B5C2AB /* BioProtocol */,
 				EFE2D96B11F7AB8DBD42A41C /* Dashboard */,
 				AD28950AAF99DF6BB3B4E233 /* EnergyForecast */,
@@ -300,6 +316,7 @@
 				57B2BA6F5AC6F22DAC43610A /* ContactTag.swift */,
 				AFD64E381AF4A61D9ACBC5D1 /* EmailStressSignal.swift */,
 				091697DEA46B40B85215C970 /* EnergyForecast.swift */,
+				B2243D524240A2175992C2A8 /* FatigueAnswer.swift */,
 				00CBDDFE14F895E97D71081E /* FoodLog.swift */,
 				62D77E8EE378BBF19D96A2FE /* MetabolicAuditResult.swift */,
 				0F368EC758C28200440BA415 /* SleepRecord.swift */,
@@ -400,6 +417,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				04C3479B9B3F3F59C309625B /* AICausalView.swift in Sources */,
+				468D6F7C1FBFD82E1D9C9F19 /* AICausalViewModel.swift in Sources */,
 				35A330EBCDF4616EA6D66437 /* AppState.swift in Sources */,
 				9D2E878CE0BED31E47BE04DA /* BioProtocol.swift in Sources */,
 				791829AC93FBE84F6EEB56B7 /* BioProtocolView.swift in Sources */,
@@ -422,6 +441,7 @@
 				20C859A82EB571BAD93D9F37 /* EmailStressSignal.swift in Sources */,
 				5959AA701A7CA3BCE9053ADF /* EnergyForecast.swift in Sources */,
 				35BDB8561588A0560430AEE6 /* EnergyForecastView.swift in Sources */,
+				0FAA1F6375888B7E37C1B913 /* FatigueAnswer.swift in Sources */,
 				01233750D61E5D56006F972C /* FoodLog.swift in Sources */,
 				76018A087B9369EED7CA3051 /* FoodLogEntryView.swift in Sources */,
 				B9DA5DADDFA9402056AC79D6 /* FoodLogService.swift in Sources */,

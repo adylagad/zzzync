@@ -25,6 +25,11 @@ struct ContentView: View {
                     Label("Protocol", systemImage: "clock.badge.checkmark.fill")
                 }
 
+            AICausalView()
+                .tabItem {
+                    Label("AI", systemImage: "sparkles")
+                }
+
             SettingsView()
                 .tabItem {
                     Label("Settings", systemImage: "person.crop.circle")

@@ -273,6 +273,110 @@ final class ClaudeService {
         )
     }
 
+    // MARK: - Fatigue Causal Engine
+
+    func explainFatigue(
+        question: String = "Why am I tired?",
+        sleepRecords: [SleepRecord],
+        biometrics: [BiometricRecord],
+        foodLogs: [FoodLog],
+        jetlagResult: SocialJetlagResult?,
+        forecast: EnergyForecast?,
+        todayEvents: [CalendarEvent],
+        emailStressSignals: [EmailStressSignal] = []
+    ) async throws -> FatigueAnswer {
+        let sleepText = sleepRecords.suffix(7).map { r in
+            "\(r.date.shortDateString): \(r.durationMinutes)m sleep, bed \(r.bedtime.timeString), wake \(r.wakeTime.timeString)"
+        }.joined(separator: "\n")
+
+        let biometricsText = biometrics.suffix(7).map { b in
+            "\(b.date.shortDateString): HRV \(b.hrvMs.map { String(format: "%.0f", $0) } ?? "N/A")ms, RHR \(b.rhrBpm.map { String(format: "%.0f", $0) } ?? "N/A")bpm"
+        }.joined(separator: "\n")
+
+        let mealText = foodLogs.suffix(8).map { log in
+            let verdict = log.auditResult?.timingVerdict.rawValue ?? "unknown"
+            return "\(log.timestamp.shortDateString) \(log.timestamp.timeString): \(log.description) [\(verdict)]"
+        }.joined(separator: "\n")
+
+        let jetlagText: String = {
+            guard let jetlagResult else { return "No jetlag result available" }
+            return "Score \(jetlagResult.score), jetlag \(String(format: "%.1f", jetlagResult.jetlagHours))h, \(jetlagResult.chronotypeDrift)"
+        }()
+
+        let forecastText: String = {
+            guard let forecast else { return "No energy forecast available" }
+            let topClashes = forecast.cognitiveClashes.prefix(3).map {
+                "\($0.eventTitle) at \($0.eventStart.timeString), severity \($0.severity.rawValue)"
+            }.joined(separator: "\n")
+            return topClashes.isEmpty ? "No clashes" : topClashes
+        }()
+
+        let eventsText = todayEvents.prefix(8).map { e in
+            "\(e.startDate.timeString)-\(e.endDate.timeString): \(e.title)"
+        }.joined(separator: "\n")
+
+        let emailText = emailStressSignals.prefix(6).map { s in
+            "\(s.senderEmail): stress \(s.stressScore), unread \(s.unreadThreads), \(s.subjectKeywords.joined(separator: ","))"
+        }.joined(separator: "\n")
+
+        let prompt = """
+        Answer the user's fatigue question with a causal analysis based only on these app signals.
+
+        USER QUESTION:
+        \(question)
+
+        SLEEP DATA:
+        \(sleepText.isEmpty ? "No sleep data" : sleepText)
+
+        BIOMETRICS:
+        \(biometricsText.isEmpty ? "No biometric data" : biometricsText)
+
+        FOOD + TIMING:
+        \(mealText.isEmpty ? "No food logs" : mealText)
+
+        JETLAG SUMMARY:
+        \(jetlagText)
+
+        TODAY'S ENERGY CLASHES:
+        \(forecastText)
+
+        TODAY'S EVENTS:
+        \(eventsText.isEmpty ? "No events" : eventsText)
+
+        EMAIL PRESSURE:
+        \(emailText.isEmpty ? "No email pressure data" : emailText)
+
+        Rules:
+        - Be specific and causal, not generic.
+        - Use the strongest 2-4 causes only.
+        - Keep wording clean and short.
+        - Do not output paragraphs.
+        - Return JSON only.
+
+        Respond with JSON matching this schema:
+        \(SystemPrompts.fatigueCausalSchema)
+        """
+
+        let raw = try await sendMessage(prompt: prompt)
+        let parsed = try parseJSON(raw, as: FatigueCausalRaw.self)
+
+        let causes = parsed.causes.map {
+            FatigueCause(
+                title: $0.title,
+                evidence: $0.evidence,
+                impactScore: $0.impact_score
+            )
+        }
+
+        return FatigueAnswer(
+            generatedAt: Date(),
+            question: question,
+            summary: parsed.summary,
+            causes: causes.sorted { $0.impactScore > $1.impactScore },
+            actions: Array(parsed.actions.prefix(3))
+        )
+    }
+
     // MARK: - Core API call
 
     private func sendMessage(prompt: String) async throws -> String {
@@ -374,6 +478,18 @@ private struct BioProtocolRaw: Decodable {
         let category: String
         let title: String
         let rationale: String
+    }
+}
+
+private struct FatigueCausalRaw: Decodable {
+    let summary: String
+    let causes: [FatigueCauseRaw]
+    let actions: [String]
+
+    struct FatigueCauseRaw: Decodable {
+        let title: String
+        let evidence: String
+        let impact_score: Int
     }
 }
 

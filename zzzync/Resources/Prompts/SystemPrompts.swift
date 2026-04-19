@@ -77,4 +77,20 @@ enum SystemPrompts {
       "claude_narrative": <string, one concise sentence (max 14 words)>
     }
     """
+
+    static let fatigueCausalSchema = """
+    {
+      "summary": <string, direct answer to why tired (max 14 words)>,
+      "causes": [
+        {
+          "title": <string, short cause label (max 4 words)>,
+          "evidence": <string, concrete data point phrase (max 10 words)>,
+          "impact_score": <integer 0-100>
+        }
+      ],
+      "actions": [
+        <string, short action phrase (max 7 words)>
+      ]
+    }
+    """
 }

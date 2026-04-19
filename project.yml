@@ -46,8 +46,6 @@ targets:
     entitlements:
       path: zzzync/zzzync.entitlements
       properties:
-        com.apple.developer.applesignin:
-          - Default
         com.apple.developer.healthkit: true
     dependencies:
       - package: MarkdownUI

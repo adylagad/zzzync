@@ -11,6 +11,7 @@ final class LocalStore {
     private let pendingSyncTasksKey = "pendingCloudSyncTasks"
     private let contactTagsKey = "contactTags"
     private let emailStressSignalsKey = "emailStressSignals"
+    private let fatigueAnswerKey = "fatigueAnswer"
     private let syncLock = NSLock()
     private var isFlushingPendingTasks = false
 
@@ -154,6 +155,16 @@ final class LocalStore {
 
     func loadEmailStressSignals() -> [EmailStressSignal] {
         load(key: emailStressSignalsKey) ?? []
+    }
+
+    // MARK: - AI Fatigue cache
+
+    func saveFatigueAnswer(_ answer: FatigueAnswer) {
+        save(answer, key: fatigueAnswerKey)
+    }
+
+    func loadFatigueAnswer() -> FatigueAnswer? {
+        load(key: fatigueAnswerKey)
     }
 
     // MARK: - Cloud Sync
@@ -385,6 +396,7 @@ final class LocalStore {
             "jetlagResult",
             "energyForecast",
             "bioProtocol",
+            fatigueAnswerKey,
             contactTagsKey,
             emailStressSignalsKey,
             syncMetadataKey,
