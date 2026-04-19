@@ -43,8 +43,6 @@ targets:
       path: zzzync/zzzync.entitlements
       properties:
         com.apple.developer.healthkit: true
-        com.apple.developer.healthkit.access:
-          - health-records
     dependencies:
       - package: MarkdownUI
       - package: Supabase

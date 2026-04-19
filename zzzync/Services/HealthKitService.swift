@@ -10,9 +10,7 @@ final class HealthKitService {
     // MARK: - Permissions
 
     func requestPermissions() async throws {
-        guard HKHealthStore.isHealthDataAvailable() else {
-            throw HealthKitError.notAvailable
-        }
+        guard HKHealthStore.isHealthDataAvailable() else { return }   // simulator / no HealthKit → skip silently
 
         let readTypes: Set<HKObjectType> = [
             HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!,
@@ -21,13 +19,15 @@ final class HealthKitService {
             HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!
         ]
 
+        // requestAuthorization never throws on denial — it only throws on system errors
         try await store.requestAuthorization(toShare: [], read: readTypes)
     }
 
     // MARK: - Sleep
 
-    /// Returns one SleepRecord per sleep session for the past N days.
     func fetchSleepRecords(days: Int = Constants.sleepLookbackDays) async throws -> [SleepRecord] {
+        guard HKHealthStore.isHealthDataAvailable() else { return mockSleepRecords(days: days) }
+
         let start = Calendar.current.date(byAdding: .day, value: -days, to: Date())!
         let predicate = HKQuery.predicateForSamples(withStart: start, end: Date())
         let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!
@@ -45,12 +45,16 @@ final class HealthKitService {
             store.execute(query)
         }
 
-        return groupSleepSamples(samples)
+        let real = groupSleepSamples(samples)
+        // If HealthKit returned nothing (no data logged yet), fall back to mock
+        return real.isEmpty ? mockSleepRecords(days: days) : real
     }
 
     // MARK: - Biometrics
 
     func fetchBiometrics(days: Int = Constants.biometricLookbackDays) async throws -> [BiometricRecord] {
+        guard HKHealthStore.isHealthDataAvailable() else { return mockBiometrics(days: days) }
+
         async let hrv = fetchDailyAverages(quantityType: .heartRateVariabilitySDNN, unit: HKUnit.secondUnit(with: .milli), days: days)
         async let rhr = fetchDailyAverages(quantityType: .restingHeartRate, unit: HKUnit(from: "count/min"), days: days)
 
@@ -59,19 +63,70 @@ final class HealthKitService {
         var records: [BiometricRecord] = []
         let allDates = Set(hrvMap.keys).union(rhrMap.keys)
         for date in allDates.sorted() {
-            records.append(BiometricRecord(
-                date: date,
-                hrvMs: hrvMap[date],
-                rhrBpm: rhrMap[date]
-            ))
+            records.append(BiometricRecord(date: date, hrvMs: hrvMap[date], rhrBpm: rhrMap[date]))
         }
-        return records
+
+        return records.isEmpty ? mockBiometrics(days: days) : records
+    }
+
+    // MARK: - Mock data (realistic social jetlag scenario for demo)
+
+    /// Simulates a night-owl whose body clock runs ~2h behind their 9 AM calendar.
+    static func mockSleepRecords(days: Int = 7) -> [SleepRecord] {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+
+        // Bedtimes drift later on weekends (the classic social jetlag pattern)
+        let bedtimeOffsets: [TimeInterval] = [
+            -1 * 3600,   // 7 days ago: 1 AM
+             0,          // 6 days ago: midnight
+            -2 * 3600,   // 5 days ago (Fri): 2 AM — weekend drift starts
+            -3 * 3600,   // 4 days ago (Sat): 3 AM
+            -2.5 * 3600, // 3 days ago (Sun): 2:30 AM
+            -1 * 3600,   // 2 days ago: 1 AM
+             0,          // yesterday: midnight
+        ]
+        let durationOffsets: [Double] = [450, 460, 480, 500, 490, 455, 465] // minutes of sleep
+
+        return (0..<min(days, bedtimeOffsets.count)).compactMap { i in
+            let dayOffset = -(days - 1 - i)
+            guard let date = cal.date(byAdding: .day, value: dayOffset, to: today) else { return nil }
+
+            // Bedtime = previous midnight + offset (so "1 AM" = 1h after midnight)
+            let midnight = cal.date(byAdding: .day, value: -1, to: date)!
+            let bedtime = Date(timeInterval: 24 * 3600 + bedtimeOffsets[i], since: midnight)
+            let duration = durationOffsets[i] * 60
+            let wakeTime = bedtime.addingTimeInterval(duration)
+
+            return SleepRecord(
+                date: date,
+                bedtime: bedtime,
+                wakeTime: wakeTime,
+                durationMinutes: Int(durationOffsets[i]),
+                deepSleepMinutes: Int(durationOffsets[i] * 0.18),
+                remSleepMinutes: Int(durationOffsets[i] * 0.22)
+            )
+        }
+    }
+
+    static func mockBiometrics(days: Int = 7) -> [BiometricRecord] {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+
+        // HRV dips on weekend (social jetlag stress), RHR ticks up slightly
+        let hrvValues: [Double] = [42, 38, 31, 28, 35, 40, 44]
+        let rhrValues: [Double] = [58, 60, 64, 66, 62, 59, 57]
+
+        return (0..<min(days, hrvValues.count)).compactMap { i in
+            let dayOffset = -(days - 1 - i)
+            guard let date = cal.date(byAdding: .day, value: dayOffset, to: today) else { return nil }
+            return BiometricRecord(date: date, hrvMs: hrvValues[i], rhrBpm: rhrValues[i])
+        }
     }
 
     // MARK: - Private helpers
 
     private func groupSleepSamples(_ samples: [HKCategorySample]) -> [SleepRecord] {
-        // Filter to actual sleep (asleep stages), not in-bed
         let asleep = samples.filter { sample in
             guard let value = HKCategoryValueSleepAnalysis(rawValue: sample.value) else { return false }
             if #available(iOS 16.0, *) {
@@ -81,10 +136,8 @@ final class HealthKitService {
                 return value == .asleep
             }
         }
-
         guard !asleep.isEmpty else { return [] }
 
-        // Group into sessions: gap > 30 minutes = new session
         var sessions: [[HKCategorySample]] = [[asleep[0]]]
         for sample in asleep.dropFirst() {
             let lastEnd = sessions.last!.last!.endDate
@@ -100,7 +153,7 @@ final class HealthKitService {
             let bedtime = first.startDate
             let wakeTime = last.endDate
             let totalMinutes = Int(wakeTime.timeIntervalSince(bedtime) / 60)
-            guard totalMinutes > 60 else { return nil }  // skip very short sessions
+            guard totalMinutes > 60 else { return nil }
 
             var deep = 0, rem = 0
             for s in session {
@@ -130,7 +183,6 @@ final class HealthKitService {
         let type = HKObjectType.quantityType(forIdentifier: identifier)!
         let start = Calendar.current.date(byAdding: .day, value: -days, to: Date())!
         let anchorDate = Calendar.current.startOfDay(for: start)
-        let interval = DateComponents(day: 1)
 
         return try await withCheckedThrowingContinuation { cont in
             let query = HKStatisticsCollectionQuery(
@@ -138,7 +190,7 @@ final class HealthKitService {
                 quantitySamplePredicate: HKQuery.predicateForSamples(withStart: start, end: Date()),
                 options: .discreteAverage,
                 anchorDate: anchorDate,
-                intervalComponents: interval
+                intervalComponents: DateComponents(day: 1)
             )
             query.initialResultsHandler = { _, results, error in
                 if let error { cont.resume(throwing: error); return }
@@ -157,8 +209,5 @@ final class HealthKitService {
 
 enum HealthKitError: LocalizedError {
     case notAvailable
-
-    var errorDescription: String? {
-        "HealthKit is not available on this device."
-    }
+    var errorDescription: String? { "HealthKit is not available on this device." }
 }

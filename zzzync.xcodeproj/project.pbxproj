@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 63;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -66,7 +66,7 @@
 		32DAD3F99750A934BEB04376 /* HealthPermissionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthPermissionView.swift; sourceTree = "<group>"; };
 		34CA1FCDC0AC0F8E5B881D6F /* BioProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BioProtocol.swift; sourceTree = "<group>"; };
 		35D94202BF784CDCA7DB8532 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
-		3708F6ABBE28069AD41FD209 /* zzzync.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = zzzync.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3708F6ABBE28069AD41FD209 /* zzzync.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = zzzync.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3BA3FD10C45592234B616628 /* JetlagViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JetlagViewModel.swift; sourceTree = "<group>"; };
 		406C79262F7156B646C3E1B2 /* OnboardingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlow.swift; sourceTree = "<group>"; };
 		4197AFF8DA4AF79B2F9B0442 /* CalendarPermissionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarPermissionView.swift; sourceTree = "<group>"; };
@@ -332,6 +332,11 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					3A66AD27395FF196642706E6 = {
+						DevelopmentTeam = "";
+					};
+				};
 			};
 			buildConfigurationList = E12E310A0F525601A8DFA8C3 /* Build configuration list for PBXProject "zzzync" */;
 			compatibilityVersion = "Xcode 14.0";
@@ -347,6 +352,7 @@
 				9E2BC2962F762138E69CC8A7 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
 				C4D981698463147557865C17 /* XCRemoteSwiftPackageReference "supabase-swift" */,
 			);
+			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -477,7 +483,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = zzzync/zzzync.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = U9GQY85ZBA;
+				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = zzzync/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -553,7 +559,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = zzzync/zzzync.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = U9GQY85ZBA;
+				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = zzzync/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
